@@ -17,6 +17,8 @@ target_compile_definitions(${XDNA_SHIM_TEST} PRIVATE
 
 target_link_libraries(${XDNA_SHIM_TEST} PRIVATE
   xrt_coreutil # for xclbin parser and some other helpers
+  xrt_core
+  xrt_driver_xdna
   dl
   )
 

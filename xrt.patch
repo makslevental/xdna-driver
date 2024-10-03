@@ -11,7 +11,7 @@ index a16b354a4..7632d9383 100644
    va_end(args);
  }
 diff --git a/src/runtime_src/core/common/module_loader.cpp b/src/runtime_src/core/common/module_loader.cpp
-index 46a28036c..beb295117 100644
+index 46a28036c..8bcc0b939 100644
 --- a/src/runtime_src/core/common/module_loader.cpp
 +++ b/src/runtime_src/core/common/module_loader.cpp
 @@ -186,7 +186,7 @@ shim_path()
@@ -23,3 +23,173 @@ index 46a28036c..beb295117 100644
  #endif
  
    if (!sfs::exists(path) || !sfs::is_regular_file(path))
+@@ -219,10 +219,10 @@ driver_plugin_paths()
+ static void*
+ load_library(const std::string& path)
+ {
++  throw std::runtime_error("Failed to open library '" + path + "'\n" + xrt_core::dlerror());
+   if (auto handle = xrt_core::dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL))
+     return handle;
+ 
+-  throw std::runtime_error("Failed to open library '" + path + "'\n" + xrt_core::dlerror());
+ }
+ 
+ } // end anonymous namespace
+@@ -242,11 +242,11 @@ module_loader(const std::string& module_name,
+       return;
+ 
+   auto path = module_path(module_name);
+-  auto handle = load_library(path.string());
+-
+-  // Do the plugin specific functionality
+-  if (register_function)
+-    register_function(handle);
++//  auto handle = load_library(path.string());
++//
++//  // Do the plugin specific functionality
++//  if (register_function)
++//    register_function(handle);
+ 
+   if (warning_function)
+     warning_function();
+@@ -260,16 +260,16 @@ shim_loader::
+ shim_loader()
+ {
+   auto path = shim_path();
+-  load_library(path.string());
++//  load_library(path.string());
+ }
+ 
+ driver_loader::
+ driver_loader()
+ {
+-  auto paths = driver_plugin_paths();
+-
+-  for (const auto& p : paths)
+-    load_library(p);
++//  auto paths = driver_plugin_paths();
++//
++//  for (const auto& p : paths)
++//    load_library(p);
+ }
+ 
+ namespace environment {
+diff --git a/src/runtime_src/core/pcie/linux/system_linux.cpp b/src/runtime_src/core/pcie/linux/system_linux.cpp
+index 81e301139..331b4eef2 100644
+--- a/src/runtime_src/core/pcie/linux/system_linux.cpp
++++ b/src/runtime_src/core/pcie/linux/system_linux.cpp
+@@ -26,7 +26,7 @@
+ #include <unistd.h>
+ #include <vector>
+ 
+-namespace {
++namespace xrt_core {
+ 
+ namespace driver_list {
+ 
+@@ -57,6 +57,12 @@ singleton_system_linux()
+   return &singleton;
+ }
+ 
++xrt_core::system_linux*
++get_singleton_system_linux()
++{
++  return singleton_system_linux();
++}
++
+ // Dynamic linking automatically constructs the singleton
+ struct X
+ {
+@@ -88,9 +94,7 @@ driver_version(const std::string& driver)
+   return _pt;
+ }
+ 
+-}
+ 
+-namespace xrt_core {
+ 
+ std::shared_ptr<pci::dev>
+ system_linux::
+@@ -138,25 +142,25 @@ get_num_dev_total(bool is_user) const
+ system_linux::
+ system_linux()
+ {
+-  // Add built-in driver to the list.
+-  driver_list::append(std::make_shared<pci::drv_xocl>());
+-  driver_list::append(std::make_shared<pci::drv_xclmgmt>());
+-
+-  // Load driver plug-ins. Driver list will be updated during loading.
+-  // Don't need to die on a plug-in loading failure.
+-  try {
+-    xrt_core::driver_loader plugins;
+-  }
+-  catch (const std::runtime_error& err) {
+-    xrt_core::send_exception_message(err.what(), "WARNING");
+-  }
+-
+-  for (const auto& driver : driver_list::get()) {
+-    if (driver->is_user())
+-      driver->scan_devices(user_ready_list, user_nonready_list);
+-    else
+-      driver->scan_devices(mgmt_ready_list, mgmt_nonready_list);
+-  }
++//  // Add built-in driver to the list.
++//  driver_list::append(std::make_shared<pci::drv_xocl>());
++//  driver_list::append(std::make_shared<pci::drv_xclmgmt>());
++//
++//  // Load driver plug-ins. Driver list will be updated during loading.
++//  // Don't need to die on a plug-in loading failure.
++//  try {
++////    xrt_core::driver_loader plugins;
++//  }
++//  catch (const std::runtime_error& err) {
++//    xrt_core::send_exception_message(err.what(), "WARNING");
++//  }
++//
++//  for (const auto& driver : driver_list::get()) {
++//    if (driver->is_user())
++//      driver->scan_devices(user_ready_list, user_nonready_list);
++//    else
++//      driver->scan_devices(mgmt_ready_list, mgmt_nonready_list);
++//  }
+ }
+ 
+ void
+diff --git a/src/runtime_src/core/pcie/linux/system_linux.h b/src/runtime_src/core/pcie/linux/system_linux.h
+index a9426dac9..163a5f72e 100644
+--- a/src/runtime_src/core/pcie/linux/system_linux.h
++++ b/src/runtime_src/core/pcie/linux/system_linux.h
+@@ -9,6 +9,15 @@
+ 
+ namespace xrt_core {
+ 
++namespace driver_list {
++void
++append(std::shared_ptr<xrt_core::pci::drv> driver);
++
++const std::vector<std::shared_ptr<xrt_core::pci::drv>>&
++get();
++}
++
++
+ class system_linux : public system_pcie
+ {
+ public:
+@@ -57,7 +66,6 @@ public:
+   size_t
+   get_num_dev_total(bool is_user) const;
+ 
+-private:
+   std::vector<std::shared_ptr<pci::dev>> user_ready_list;
+   std::vector<std::shared_ptr<pci::dev>> user_nonready_list;
+ 
+@@ -65,6 +73,9 @@ private:
+   std::vector<std::shared_ptr<pci::dev>> mgmt_nonready_list;
+ };
+ 
++xrt_core::system_linux*
++get_singleton_system_linux();
++
+ namespace pci {
+ 
+ /**

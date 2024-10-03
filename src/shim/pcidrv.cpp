@@ -11,11 +11,6 @@
 
 namespace {
 
-struct X
-{
-  X() { xrt_core::pci::register_driver(std::make_shared<shim_xdna::drv>()); }
-} x;
-
 amdxdna_device_type
 get_dev_type(const std::string& sysfs)
 {

@@ -11,11 +11,13 @@
 #include "hwctx.h"
 #include "speed.h"
 #include "bo.h"
+#include "dlfcn.h"
 
+#include "../../src/shim/pcidrv.h"
 #include "core/common/query_requests.h"
 #include "core/common/sysinfo.h"
 #include "core/common/system.h"
-#include "core/common/device.h"
+#include "core/pcie/linux/system_linux.h"
 
 #include <filesystem>
 #include <libgen.h>
@@ -624,6 +626,12 @@ std::vector<test_case> test_list {
 } // namespace
 
 // Test case executor implementation
+//
+//std::shared_ptr<device>
+//get_userpf_device(device::id_type id)
+//{
+//
+//}
 
 void
 run_test(int id, const test_case& test, bool force, const device::id_type& num_of_devices)
@@ -671,20 +679,20 @@ void
 run_all_test(std::set<int>& tests)
 {
   auto all = tests.empty();
-  device::id_type total_dev = 0;
+  device::id_type total_dev = 1;
 
-  try {
-    auto devinfo = get_total_devices(true);
-    total_dev = devinfo.second;
-  } catch (const std::runtime_error& e) {
-    std::cout << e.what();
-  }
+//  try {
+//    auto devinfo = get_total_devices(true);
+//    total_dev = devinfo.second;
+//  } catch (const std::runtime_error& e) {
+//    std::cout << e.what();
+//  }
 
-  if (total_dev == 0) {
-    std::cout << "No testable devices on this machine. Failing all tests.\n";
-    test_failed = test_list.size();
-    return;
-  }
+//  if (total_dev == 0) {
+//    std::cout << "No testable devices on this machine. Failing all tests.\n";
+//    test_failed = test_list.size();
+//    return;
+//  }
 
   for (int i = 0; i < test_list.size(); i++) {
     if (!all) {
@@ -723,6 +731,16 @@ main(int argc, char **argv)
   catch (...) {
     usage(program);
     return 2;
+  }
+
+  xrt_core::pci::register_driver(std::make_shared<shim_xdna::drv>());
+  auto sing = get_singleton_system_linux();
+
+  for (const auto& driver : xrt_core::driver_list::get()) {
+    if (driver->is_user())
+      driver->scan_devices(sing->user_ready_list, sing->user_nonready_list);
+    else
+      driver->scan_devices(sing->mgmt_ready_list, sing->mgmt_nonready_list);
   }
 
   cur_path = dirname(argv[0]);
