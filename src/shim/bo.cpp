@@ -250,6 +250,30 @@ free_bo()
   m_bo.reset();
 }
 
+amdxdna_bo_type flag_to_type(uint64_t bo_flags) {
+  auto flags = shim_xdna::xcl_bo_flags{bo_flags};
+  auto boflags = (static_cast<uint32_t>(flags.boflags) << 24);
+  switch (boflags) {
+    case XCL_BO_FLAGS_NONE:
+    case XCL_BO_FLAGS_HOST_ONLY:
+      return AMDXDNA_BO_SHMEM;
+    case XCL_BO_FLAGS_CACHEABLE:
+      return AMDXDNA_BO_DEV;
+    case XCL_BO_FLAGS_EXECBUF:
+      return AMDXDNA_BO_CMD;
+    default:
+      break;
+  }
+  return AMDXDNA_BO_INVALID;
+}
+
+bo::
+bo(const device& device, uint32_t ctx_id, size_t size, uint64_t flags)
+  : bo(device, ctx_id, size, flags, flag_to_type(flags)) {
+  if (m_type == AMDXDNA_BO_INVALID)
+    shim_err(EINVAL, "Invalid BO flags: 0x%lx", flags);
+}
+
 bo::
 bo(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
   size_t size, uint64_t flags, amdxdna_bo_type type)

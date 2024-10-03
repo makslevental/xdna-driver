@@ -86,7 +86,7 @@ sync(bo_umq::direction dir, size_t size, size_t offset)
 
 void
 bo_umq::
-bind_at(size_t pos, const buffer_handle* bh, size_t offset, size_t size)
+bind_at(size_t pos, const bo* bh, size_t offset, size_t size)
 {
   // No-op
 }

@@ -11,32 +11,32 @@
 #include "core/common/shim/hwqueue_handle.h"
 
 namespace shim_xdna {
-
-class hw_q : public xrt_core::hwqueue_handle
+class bo;
+class hw_q
 {
 public:
   hw_q(const device& device);
 
   void
-  submit_command(xrt_core::buffer_handle *) override;
+  submit_command(bo *);
 
   int
-  poll_command(xrt_core::buffer_handle *) const override;
+  poll_command(bo *) const;
 
   int
-  wait_command(xrt_core::buffer_handle *, uint32_t timeout_ms) const override;
+  wait_command(bo *, uint32_t timeout_ms) const;
 
   void
-  submit_wait(const xrt_core::fence_handle*) override;
+  submit_wait(const xrt_core::fence_handle*);
 
   void
-  submit_wait(const std::vector<xrt_core::fence_handle*>&) override;
+  submit_wait(const std::vector<xrt_core::fence_handle*>&);
 
   void
-  submit_signal(const xrt_core::fence_handle*) override;
+  submit_signal(const xrt_core::fence_handle*);
 
   std::unique_ptr<xrt_core::fence_handle>
-  import(xrt_core::fence_handle::export_handle) override
+  import(xrt_core::fence_handle::export_handle)
   { shim_not_supported_err(__func__); }
 
 public:
@@ -51,7 +51,7 @@ public:
 
 protected:
   virtual void
-  issue_command(xrt_core::buffer_handle *) = 0;
+  issue_command(bo *) = 0;
 
   const hw_ctx *m_hwctx;
   const pdev& m_pdev;

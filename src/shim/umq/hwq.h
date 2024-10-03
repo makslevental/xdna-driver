@@ -19,7 +19,7 @@ public:
   ~hw_q_umq();
 
   void
-  issue_command(xrt_core::buffer_handle *) override;
+  issue_command(bo *) override;
 
   void
   dump() const;
@@ -40,7 +40,7 @@ private:
     struct exec_buf		payload;
   };
 
-  std::unique_ptr<xrt_core::buffer_handle> m_umq_bo;
+  std::unique_ptr<bo> m_umq_bo;
   void *m_umq_bo_buf;
   volatile struct host_queue_header *m_umq_hdr = nullptr;
   volatile struct host_queue_packet *m_umq_pkt = nullptr;

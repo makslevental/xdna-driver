@@ -19,7 +19,7 @@ public:
   bind_hwctx(const hw_ctx *ctx);
 
   void
-  issue_command(xrt_core::buffer_handle *) override;
+  issue_command(bo *) override;
 };
 
 } // shim_xdna

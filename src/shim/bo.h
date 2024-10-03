@@ -19,36 +19,101 @@
 
 namespace shim_xdna {
 
-class bo : public xrt_core::buffer_handle
+#define XRT_BO_USE_NORMAL 0
+#define XRT_BO_USE_DEBUG 1
+
+/**
+ * XCL BO Flags bits layout
+ *
+ * bits  0 ~ 15: DDR BANK index
+ * bits 24 ~ 31: BO flags
+ */
+#define XRT_BO_FLAGS_MEMIDX_MASK (0xFFFFFFUL)
+#define XCL_BO_FLAGS_NONE (0)
+#define XCL_BO_FLAGS_CACHEABLE (1U << 24)
+#define XCL_BO_FLAGS_KERNBUF (1U << 25)
+#define XCL_BO_FLAGS_SGL (1U << 26)
+#define XCL_BO_FLAGS_SVM (1U << 27)
+#define XCL_BO_FLAGS_DEV_ONLY (1U << 28)
+#define XCL_BO_FLAGS_HOST_ONLY (1U << 29)
+#define XCL_BO_FLAGS_P2P (1U << 30)
+#define XCL_BO_FLAGS_EXECBUF (1U << 31)
+
+/**
+ * Encoding of flags passed to xcl buffer allocation APIs
+ */
+struct xcl_bo_flags {
+  union {
+    uint64_t all;  // [63-0]
+
+    struct {
+      uint32_t flags;      // [31-0]
+      uint32_t extension;  // [63-32]
+    };
+
+    struct {
+      uint16_t bank;    // [15-0]
+      uint8_t slot;     // [23-16]
+      uint8_t boflags;  // [31-24]
+
+      // extension
+      uint32_t access : 2;   // [33-32]
+      uint32_t dir : 2;      // [35-34]
+      uint32_t use : 1;      // [36]
+      uint32_t unused : 27;  // [63-35]
+    };
+  };
+};
+
+class bo
 {
 public:
+  // map_type - determines how a buffer is mapped
+  enum class map_type { read, write };
+
+  enum xclBOSyncDirection {
+    XCL_BO_SYNC_BO_TO_DEVICE = 0,
+    XCL_BO_SYNC_BO_FROM_DEVICE,
+    XCL_BO_SYNC_BO_GMIO_TO_AIE,
+    XCL_BO_SYNC_BO_AIE_TO_GMIO,
+  };
+
+  // direction - direction of sync operation
+  enum class direction {
+    host2device = XCL_BO_SYNC_BO_TO_DEVICE,
+    device2host = XCL_BO_SYNC_BO_FROM_DEVICE,
+  };
+
+  // properties - buffer details
+  struct properties {
+    uint64_t flags;  // flags of bo
+    uint64_t size;   // size of bo
+    uint64_t paddr;  // physical address
+    uint64_t kmhdl;  // kernel mode handle
+  };
+
   bo(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
     size_t size, uint64_t flags, amdxdna_bo_type type);
-
+  bo(const device& device, uint32_t ctx_id, size_t size, uint64_t flags);
   bo(const device& device, xrt_core::shared_handle::export_handle ehdl);
 
   ~bo();
 
   void*
-  map(map_type) override;
+  map(map_type);
 
   void
-  unmap(void* addr) override;
+  unmap(void* addr);
 
-  void
-  sync(direction, size_t size, size_t offset) override = 0;
+  virtual void
+  sync(direction, size_t size, size_t offset) = 0;
 
   properties
-  get_properties() const override;
+  get_properties() const;
 
   std::unique_ptr<xrt_core::shared_handle>
-  share() const override;
+  share() const;
 
-  void
-  copy(const xrt_core::buffer_handle* src, size_t size, size_t dst_offset, size_t src_offset) override
-  { shim_not_supported_err(__func__); }
-
-public:
   // For cmd BO only
   void
   set_cmd_id(uint64_t id);
@@ -62,8 +127,6 @@ public:
   amdxdna_bo_type
   get_type() const;
 
-protected:
-
   // DRM BO managed by driver.
   class drm_bo {
   public:
@@ -76,6 +139,10 @@ protected:
     drm_bo(bo& parent, const amdxdna_drm_get_bo_info& bo_info);
     ~drm_bo();
   };
+
+  virtual void
+  bind_at(size_t /*pos*/, const bo* /*bh*/, size_t /*offset*/, size_t /*size*/)
+  {}
 
   std::string
   describe() const;

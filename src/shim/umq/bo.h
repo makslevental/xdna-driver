@@ -21,7 +21,7 @@ public:
   sync(direction dir, size_t size, size_t offset) override;
 
   void
-  bind_at(size_t pos, const buffer_handle* bh, size_t offset, size_t size) override;
+  bind_at(size_t pos, const bo* bh, size_t offset, size_t size) override;
 
 private:
   bo_umq(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,

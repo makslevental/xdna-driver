@@ -50,12 +50,12 @@ clflush_data(const void *base, size_t offset, size_t len)
 }
 
 void
-sync_drm_bo(const shim_xdna::pdev& dev, uint32_t boh, xrt_core::buffer_handle::direction dir,
+sync_drm_bo(const shim_xdna::pdev& dev, uint32_t boh, shim_xdna::bo::direction dir,
   size_t offset, size_t len)
 {
   amdxdna_drm_sync_bo sbo = {
     .handle = boh,
-    .direction = (dir == xrt_core::buffer_handle::direction::host2device ?
+    .direction = (dir == shim_xdna::bo::direction::host2device ?
       SYNC_DIRECT_TO_DEVICE : SYNC_DIRECT_FROM_DEVICE),
     .offset = offset,
     .size = len,
@@ -175,7 +175,7 @@ sync(direction dir, size_t size, size_t offset)
 
 void
 bo_kmq::
-bind_at(size_t pos, const buffer_handle* bh, size_t offset, size_t size)
+bind_at(size_t pos, const bo* bh, size_t offset, size_t size)
 {
   auto boh = reinterpret_cast<const bo_kmq*>(bh);
   std::lock_guard<std::mutex> lg(m_args_map_lock);

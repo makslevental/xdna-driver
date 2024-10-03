@@ -10,15 +10,15 @@
 namespace {
 
 ert_packet *
-get_chained_command_pkt(xrt_core::buffer_handle *boh)
+get_chained_command_pkt(shim_xdna::bo *boh)
 {
-  auto cmdpkt = reinterpret_cast<ert_packet *>(boh->map(xrt_core::buffer_handle::map_type::write));
+  auto cmdpkt = reinterpret_cast<ert_packet *>(boh->map(shim_xdna::bo::map_type::write));
   return cmdpkt->opcode == ERT_CMD_CHAIN ? cmdpkt : nullptr;
 }
 
 int
 wait_cmd(const shim_xdna::pdev& pdev, const shim_xdna::hw_ctx *ctx,
-  xrt_core::buffer_handle *cmd, uint32_t timeout_ms)
+  shim_xdna::bo *cmd, uint32_t timeout_ms)
 {
   int ret = 1;
   auto boh = static_cast<shim_xdna::bo*>(cmd);
@@ -81,16 +81,16 @@ get_queue_bo()
 
 void
 hw_q::
-submit_command(xrt_core::buffer_handle *cmd)
+submit_command(shim_xdna::bo *cmd)
 {
   issue_command(cmd);
 }
 
 int
 hw_q::
-poll_command(xrt_core::buffer_handle *cmd) const
+poll_command(shim_xdna::bo *cmd) const
 {
-  auto cmdpkt = reinterpret_cast<ert_packet *>(cmd->map(xrt_core::buffer_handle::map_type::write));
+  auto cmdpkt = reinterpret_cast<ert_packet *>(cmd->map(shim_xdna::bo::map_type::write));
 
   if (cmdpkt->state >= ERT_CMD_STATE_COMPLETED) {
     XRT_TRACE_POINT_LOG(poll_command_done);
@@ -101,7 +101,7 @@ poll_command(xrt_core::buffer_handle *cmd) const
 
 int
 hw_q::
-wait_command(xrt_core::buffer_handle *cmd, uint32_t timeout_ms) const
+wait_command(shim_xdna::bo *cmd, uint32_t timeout_ms) const
 {
   if (poll_command(cmd))
       return 1;

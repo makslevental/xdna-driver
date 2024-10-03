@@ -20,7 +20,7 @@ hw_q_kmq::
 
 void
 hw_q_kmq::
-issue_command(xrt_core::buffer_handle *cmd_bo)
+issue_command(bo *cmd_bo)
 {
   // Assuming 1024 max args per cmd bo
   const size_t max_arg_bos = 1024;

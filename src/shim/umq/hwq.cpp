@@ -3,6 +3,7 @@
 
 #include <x86intrin.h>
 #include "bo.h"
+#include "../bo.h"
 #include "hwq.h"
 
 namespace {
@@ -365,7 +366,7 @@ fill_slot_and_send(volatile struct host_queue_packet *pkt, size_t size)
 
 void
 hw_q_umq::
-issue_command(xrt_core::buffer_handle *cmd_bo)
+issue_command(bo *cmd_bo)
 {
   auto boh = static_cast<bo*>(cmd_bo);
   auto cmd = reinterpret_cast<ert_start_kernel_cmd *>(boh->map(bo::map_type::write));
