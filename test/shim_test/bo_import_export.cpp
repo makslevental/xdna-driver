@@ -6,6 +6,7 @@
 #include "2proc.h"
 #include "dev_info.h"
 
+#include "../../src/shim/get_user_pf.h"
 #include "core/common/system.h"
 
 namespace {
@@ -37,7 +38,7 @@ private:
     msg("Received BO %d from PID %d", idata.hdl, idata.pid);
 
     // Create IO test BO set and replace input BO with the one from child
-    auto dev = get_userpf_device(get_dev_id());
+    auto dev = my_get_userpf_device(get_dev_id());
     auto wrk = get_xclbin_workspace(dev.get());
     io_test_bo_set boset{dev.get(), wrk + "/data/"};
     boset.get_bos()[IO_TEST_BO_INPUT].tbo = std::make_shared<bo>(dev.get(), idata.pid, idata.hdl);
@@ -51,7 +52,7 @@ private:
     msg("test started...");
 
     // Create IO test BO set and share input BO with parent
-    auto dev = get_userpf_device(get_dev_id());
+    auto dev = my_get_userpf_device(get_dev_id());
     auto wrk = get_xclbin_workspace(dev.get());
     io_test_bo_set boset{dev.get(), wrk + "/data/"};
     auto share = boset.get_bos()[IO_TEST_BO_INPUT].tbo->get()->share();

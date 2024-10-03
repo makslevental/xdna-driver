@@ -4,14 +4,14 @@
 #ifndef _SHIM_XDNA_H_
 #define _SHIM_XDNA_H_
 
-#include "core/common/system.h"
+#include "get_user_pf.h"
 
 namespace shim_xdna {
 
 class shim
 {
 public:
-  shim(xrt_core::device::id_type id) : m_device(xrt_core::get_userpf_device(this, id))
+  shim(xrt_core::device::id_type id) : m_device(my_get_userpf_device(this, id))
   {}
 
   ~shim()

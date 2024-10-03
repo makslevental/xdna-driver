@@ -30,7 +30,6 @@ public:
   std::string
   sysfs_dev_node_dir() const override;
 
-private:
   std::shared_ptr<xrt_core::pci::dev>
   create_pcidev(const std::string& sysfs) const override;
 };

@@ -74,8 +74,72 @@ index 46a28036c..8bcc0b939 100644
  }
  
  namespace environment {
+diff --git a/src/runtime_src/core/common/system.cpp b/src/runtime_src/core/common/system.cpp
+index 708f92c48..8cd037402 100644
+--- a/src/runtime_src/core/common/system.cpp
++++ b/src/runtime_src/core/common/system.cpp
+@@ -111,30 +111,32 @@ get_devices(boost::property_tree::ptree& pt)
+ std::shared_ptr<device>
+ get_userpf_device(device::id_type id)
+ {
+-  // Construct device by calling xclOpen, the returned
+-  // device is cached and unmanaged
+-  auto device = instance().get_userpf_device(id);
+-
+-  if (!device)
+-    throw std::runtime_error("Could not open device with index '"+ std::to_string(id) + "'");
+-
+-  // Repackage raw ptr in new shared ptr with deleter that calls xclClose,
+-  // but leaves device object alone. The returned device is managed in that
+-  // it calls xclClose when going out of scope.
+-  auto close = [] (xrt_core::device* d) { d->close_device(); };
+-  std::shared_ptr<xrt_core::device> ptr{device.get(), close};
+-
+-  // The repackage raw ptr is the one that should be cached so
+-  // so that all references to device handles in application code
+-  // are tied to the shared ptr that ends up calling xclClose
+-  std::lock_guard lk(mutex);
+-  userpf_device_map[device->get_device_handle()] = ptr;
+-  return ptr;
++  throw std::runtime_error("Could not open device with index '"+ std::to_string(id) + "'");
++//  // Construct device by calling xclOpen, the returned
++//  // device is cached and unmanaged
++//  auto device = instance().get_userpf_device(id);
++//
++//  if (!device)
++//    throw std::runtime_error("Could not open device with index '"+ std::to_string(id) + "'");
++//
++//  // Repackage raw ptr in new shared ptr with deleter that calls xclClose,
++//  // but leaves device object alone. The returned device is managed in that
++//  // it calls xclClose when going out of scope.
++//  auto close = [] (xrt_core::device* d) { d->close_device(); };
++//  std::shared_ptr<xrt_core::device> ptr{device.get(), close};
++//
++//  // The repackage raw ptr is the one that should be cached so
++//  // so that all references to device handles in application code
++//  // are tied to the shared ptr that ends up calling xclClose
++//  std::lock_guard lk(mutex);
++//  userpf_device_map[device->get_device_handle()] = ptr;
++//  return ptr;
+ }
+ 
+ std::shared_ptr<device>
+ get_userpf_device(device::handle_type handle)
+ {
++  throw std::runtime_error("wtfbbq1");
+   // Look up core device from low level shim handle The handle is
+   // inserted into map as part of calling xclOpen.  Protect against
+   // multiple threads calling xclOpen at the same time, e.g. one
+@@ -150,6 +152,7 @@ get_userpf_device(device::handle_type handle)
+ std::shared_ptr<device>
+ get_userpf_device(device::handle_type handle, device::id_type id)
+ {
++  throw std::runtime_error("wtfbbq2");
+   // Check device map cache
+   if (auto device = get_userpf_device(handle)) {
+     if (device->get_device_id() != id)
 diff --git a/src/runtime_src/core/pcie/linux/system_linux.cpp b/src/runtime_src/core/pcie/linux/system_linux.cpp
-index 81e301139..331b4eef2 100644
+index 81e301139..405e09f43 100644
 --- a/src/runtime_src/core/pcie/linux/system_linux.cpp
 +++ b/src/runtime_src/core/pcie/linux/system_linux.cpp
 @@ -26,7 +26,7 @@
@@ -100,7 +164,7 @@ index 81e301139..331b4eef2 100644
  // Dynamic linking automatically constructs the singleton
  struct X
  {
-@@ -88,9 +94,7 @@ driver_version(const std::string& driver)
+@@ -88,14 +94,13 @@ driver_version(const std::string& driver)
    return _pt;
  }
  
@@ -110,7 +174,13 @@ index 81e301139..331b4eef2 100644
  
  std::shared_ptr<pci::dev>
  system_linux::
-@@ -138,25 +142,25 @@ get_num_dev_total(bool is_user) const
+ get_pcidev(unsigned index, bool is_user) const
+ {
++  throw std::runtime_error(" No such device with index '"+ std::to_string(index) + "'");
+   if (is_user) {
+     if (index < user_ready_list.size())
+       return user_ready_list[index];
+@@ -138,25 +143,25 @@ get_num_dev_total(bool is_user) const
  system_linux::
  system_linux()
  {
@@ -155,6 +225,22 @@ index 81e301139..331b4eef2 100644
  }
  
  void
+@@ -217,6 +222,7 @@ std::shared_ptr<device>
+ system_linux::
+ get_userpf_device(device::id_type id) const
+ {
++  throw xrt_core::system_error(EINVAL, "No such device '");
+   auto pdev = get_pcidev(id, true);
+   return xrt_core::get_userpf_device(pdev->create_shim(id));
+ }
+@@ -225,6 +231,7 @@ std::shared_ptr<device>
+ system_linux::
+ get_userpf_device(device::handle_type handle, device::id_type id) const
+ {
++  throw xrt_core::system_error(EINVAL, "No such device '");
+   auto pdev = get_pcidev(id, true);
+   return pdev->create_device(handle, id);
+ }
 diff --git a/src/runtime_src/core/pcie/linux/system_linux.h b/src/runtime_src/core/pcie/linux/system_linux.h
 index a9426dac9..163a5f72e 100644
 --- a/src/runtime_src/core/pcie/linux/system_linux.h

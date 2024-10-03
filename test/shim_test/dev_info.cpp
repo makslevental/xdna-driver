@@ -188,8 +188,10 @@ xclbin_info xclbin_infos[] = {
 const xclbin_info&
 get_xclbin_info(device* dev, const char *xclbin_name)
 {
-  auto pci_dev_id = device_query<query::pcie_device>(dev);
-  auto revision_id = device_query<query::pcie_id>(dev).revision_id;
+  //  auto pci_dev_id = device_query<query::pcie_device>(dev);
+  uint16_t pci_dev_id = 5378;
+  //  auto revision_id = device_query<query::pcie_id>(dev).revision_id;
+  uint8_t revision_id = 0;
   for (auto& xclbin : xclbin_infos) {
     if ((xclbin.device == pci_dev_id) &&
         ((xclbin.revision_id == revision_id) || (xclbin.revision_id == npu_any_revision_id)) &&

@@ -13,6 +13,7 @@ add_library(${XDNA_TARGET} SHARED
   ${KMQ_SOURCES}
   ${UMQ_SOURCES}
   shim_debug.cpp
+  get_user_pf.cpp
   )
 
 set_target_properties(${XDNA_TARGET} PROPERTIES

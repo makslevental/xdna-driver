@@ -294,7 +294,7 @@ TEST_io_runlist_latency(device::id_type id, std::shared_ptr<device> sdev, arg_ty
 void
 TEST_io_runlist_throughput(device::id_type id, std::shared_ptr<device> sdev, arg_type& arg)
 {
-  throw std::runtime_error("TODO(max): re-enable");
+  throw std::runtime_error("TODO(max): re-enable TEST_io_runlist_throughput");
   unsigned int run_type = static_cast<unsigned int>(arg[0]);
   unsigned int wait_type = static_cast<unsigned int>(arg[1]);
   unsigned int total_commands = static_cast<unsigned int>(arg[2]);

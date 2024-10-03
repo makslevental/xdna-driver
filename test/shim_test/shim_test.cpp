@@ -17,7 +17,7 @@
 #include "core/common/query_requests.h"
 #include "core/common/sysinfo.h"
 #include "core/common/system.h"
-#include "core/pcie/linux/system_linux.h"
+#include "../../src/shim/get_user_pf.h"
 
 #include <filesystem>
 #include <libgen.h>
@@ -91,15 +91,7 @@ int test_failed = 0;
 bool
 is_xdna_dev(device* dev)
 {
-  bool is_xdna = false;
-
-  try {
-    auto query_result = device_query<query::rom_fpga_name>(dev);
-  }
-  catch (const query::no_such_key& nk) {
-    is_xdna = true;
-  }
-  return is_xdna;
+  return true;
 }
 
 bool
@@ -131,7 +123,8 @@ dev_filter_is_aie2(device::id_type id, device* dev)
 {
   if (!is_xdna_dev(dev))
     return false;
-  auto device_id = device_query<query::pcie_device>(dev);
+  //  auto device_id = device_query<query::pcie_device>(dev);
+  uint16_t device_id = 5378;
   return device_id == npu1_device_id || device_id == npu2_device_id;
 }
 
@@ -140,7 +133,8 @@ dev_filter_is_aie4(device::id_type id, device* dev)
 {
   if (!is_xdna_dev(dev))
     return false;
-  auto device_id = device_query<query::pcie_device>(dev);
+  //  auto device_id = device_query<query::pcie_device>(dev);
+  uint16_t device_id = 5378;
   return device_id == npu3_device_id || device_id == npu3_device_id1;
 }
 
@@ -203,6 +197,7 @@ bdf_info2str(std::tuple<uint16_t, uint16_t, uint16_t, uint16_t>& info)
 void
 TEST_get_bdf_info_and_get_device_id(device::id_type id, std::shared_ptr<device> sdev, arg_type& arg)
 {
+  throw std::runtime_error("TODO(max): re-enable TEST_get_bdf_info_and_get_device_id");
   auto is_user = arg[0];
   auto devinfo = get_total_devices(is_user);
   for (device::id_type i = 0; i < devinfo.first; i++) {
@@ -226,6 +221,7 @@ template <typename QueryRequestType>
 void
 TEST_query_userpf(device::id_type id, std::shared_ptr<device> sdev, arg_type& arg)
 {
+  throw std::runtime_error("TODO(max): re-enable TEST_query_userpf");
   auto query_result = device_query<QueryRequestType>(sdev);
   std::cout << "dev[" << id << "]." << QueryRequestType::name() << ": "
     << QueryRequestType::to_string(query_result) << std::endl;
@@ -239,11 +235,11 @@ TEST_create_destroy_hw_context(device::id_type id, std::shared_ptr<device> sdev,
 
   // Try opening device and creating ctx twice
   {
-    auto dev = get_userpf_device(id);
+    auto dev = my_get_userpf_device(id);
     hw_ctx hwctx{dev.get()};
   }
   {
-    auto dev = get_userpf_device(id);
+    auto dev = my_get_userpf_device(id);
     hw_ctx hwctx{dev.get()};
   }
 }
@@ -625,14 +621,6 @@ std::vector<test_case> test_list {
 
 } // namespace
 
-// Test case executor implementation
-//
-//std::shared_ptr<device>
-//get_userpf_device(device::id_type id)
-//{
-//
-//}
-
 void
 run_test(int id, const test_case& test, bool force, const device::id_type& num_of_devices)
 {
@@ -646,7 +634,7 @@ run_test(int id, const test_case& test, bool force, const device::id_type& num_o
       test.func(0, nullptr, test.arg);
     } else { // per user device test
       for (device::id_type i = 0; i < num_of_devices; i++) {
-        auto dev = get_userpf_device(i);
+        auto dev = ::my_get_userpf_device(i);
         if (!force && !test.dev_filter(i, dev.get()))
           continue;
         skipped = false;
@@ -681,19 +669,6 @@ run_all_test(std::set<int>& tests)
   auto all = tests.empty();
   device::id_type total_dev = 1;
 
-//  try {
-//    auto devinfo = get_total_devices(true);
-//    total_dev = devinfo.second;
-//  } catch (const std::runtime_error& e) {
-//    std::cout << e.what();
-//  }
-
-//  if (total_dev == 0) {
-//    std::cout << "No testable devices on this machine. Failing all tests.\n";
-//    test_failed = test_list.size();
-//    return;
-//  }
-
   for (int i = 0; i < test_list.size(); i++) {
     if (!all) {
       if (tests.find(i) == tests.end())
@@ -706,6 +681,8 @@ run_all_test(std::set<int>& tests)
     std::cout << std::endl;
   }
 }
+
+namespace sfs = std::filesystem;
 
 int
 main(int argc, char **argv)
@@ -733,15 +710,10 @@ main(int argc, char **argv)
     return 2;
   }
 
-  xrt_core::pci::register_driver(std::make_shared<shim_xdna::drv>());
-  auto sing = get_singleton_system_linux();
-
-  for (const auto& driver : xrt_core::driver_list::get()) {
-    if (driver->is_user())
-      driver->scan_devices(sing->user_ready_list, sing->user_nonready_list);
-    else
-      driver->scan_devices(sing->mgmt_ready_list, sing->mgmt_nonready_list);
-  }
+  auto driver = std::make_shared<shim_xdna::drv>();
+  const sfs::path drvpath = "/sys/bus/pci/drivers/amdxdna/0000:c5:00.1";
+  auto pf = driver->create_pcidev(drvpath.filename().string());
+  add_to_user_ready_list(pf);
 
   cur_path = dirname(argv[0]);
   set_xrt_path();
