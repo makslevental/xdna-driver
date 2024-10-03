@@ -42,7 +42,7 @@ local_path(std::string fname)
 inline void
 set_xrt_path()
 {
-  setenv("XILINX_XRT", local_path("").c_str(), true);
+//  setenv("XILINX_XRT", local_path("").c_str(), true);
 }
 
 static void test_pause()

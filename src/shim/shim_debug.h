@@ -5,10 +5,14 @@
 #define SHIM_DEBUG_H
 
 #include "core/common/error.h"
-#include "core/common/debug.h"
 #include <cstdio>
 #include <memory>
 #include <unistd.h>
+
+void
+debugf(const char* format,...);
+
+# define XRT_PRINTF(format,...) debugf(format, ##__VA_ARGS__)
 
 namespace {
 
@@ -38,12 +42,10 @@ template <typename ...Args>
 void
 shim_debug(const char* fmt, Args&&... args)
 {
-#ifdef XDNA_SHIM_DEBUG
-  std::string format = "PID(%d): ";
+  std::string format = "";
   format += std::string(fmt);
   format += "\n";
-  XRT_PRINTF(format.c_str(), getpid(), std::forward<Args>(args)...);
-#endif
+  XRT_PRINTF(format.c_str(), std::forward<Args>(args)...);
 }
 
 template <typename ...Args>

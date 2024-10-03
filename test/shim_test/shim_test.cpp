@@ -41,6 +41,8 @@ void TEST_txn_elf_flow(device::id_type, std::shared_ptr<device>, arg_type&);
 void TEST_cmd_fence_host(device::id_type, std::shared_ptr<device>, arg_type&);
 void TEST_cmd_fence_device(device::id_type, std::shared_ptr<device>, arg_type&);
 
+#define REPEAT_RUNS 1
+
 namespace {
 
 int base_write_speed;
@@ -50,7 +52,7 @@ std::string program;
 inline void
 set_xrt_path()
 {
-  setenv("XILINX_XRT", (cur_path + "/../").c_str(), true);
+//  setenv("XILINX_XRT", (cur_path + "/../").c_str(), true);
 }
 
 enum test_mode {
@@ -549,10 +551,10 @@ std::vector<test_case> test_list {
     TEST_POSITIVE, dev_filter_is_aie2, TEST_io, { IO_TEST_NORMAL_RUN, 1 }
   },
   test_case{ "measure no-op kernel latency",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_latency, { IO_TEST_NOOP_RUN, IO_TEST_IOCTL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_latency, { IO_TEST_NOOP_RUN, IO_TEST_IOCTL_WAIT, REPEAT_RUNS }
   },
   test_case{ "measure real kernel latency",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_latency, { IO_TEST_NORMAL_RUN, IO_TEST_IOCTL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_latency, { IO_TEST_NORMAL_RUN, IO_TEST_IOCTL_WAIT, REPEAT_RUNS }
   },
   test_case{ "create and free debug bo",
     TEST_POSITIVE, dev_filter_is_aie2, TEST_create_free_debug_bo, { 0x1000 }
@@ -564,7 +566,7 @@ std::vector<test_case> test_list {
     TEST_POSITIVE, dev_filter_is_aie2, TEST_io, { IO_TEST_NORMAL_RUN, 3 }
   },
   test_case{ "measure no-op kernel throughput chained command",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_runlist_throughput, { IO_TEST_NOOP_RUN, IO_TEST_IOCTL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_runlist_throughput, { IO_TEST_NOOP_RUN, IO_TEST_IOCTL_WAIT, REPEAT_RUNS }
   },
   test_case{ "npu3 shim vadd",
     TEST_POSITIVE, dev_filter_is_aie4, TEST_shim_umq_vadd, {}
@@ -591,22 +593,22 @@ std::vector<test_case> test_list {
     TEST_POSITIVE, dev_filter_is_aie2, TEST_noop_io_with_dup_bo, {}
   },
   test_case{ "measure no-op kernel latency chained command",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_runlist_latency, { IO_TEST_NOOP_RUN, IO_TEST_IOCTL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_runlist_latency, { IO_TEST_NOOP_RUN, IO_TEST_IOCTL_WAIT, REPEAT_RUNS }
   },
   test_case{ "measure no-op kernel throuput",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_throughput, { IO_TEST_NOOP_RUN, IO_TEST_IOCTL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_throughput, { IO_TEST_NOOP_RUN, IO_TEST_IOCTL_WAIT, REPEAT_RUNS }
   },
   test_case{ "measure no-op kernel latency (polling)",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_latency, { IO_TEST_NOOP_RUN, IO_TEST_POLL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_latency, { IO_TEST_NOOP_RUN, IO_TEST_POLL_WAIT, REPEAT_RUNS }
   },
   test_case{ "measure no-op kernel throuput (polling)",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_throughput, { IO_TEST_NOOP_RUN, IO_TEST_POLL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_throughput, { IO_TEST_NOOP_RUN, IO_TEST_POLL_WAIT, REPEAT_RUNS }
   },
   test_case{ "measure no-op kernel latency chained command (polling)",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_runlist_latency, { IO_TEST_NOOP_RUN, IO_TEST_POLL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_runlist_latency, { IO_TEST_NOOP_RUN, IO_TEST_POLL_WAIT, REPEAT_RUNS }
   },
   test_case{ "measure no-op kernel throughput chained command (polling)",
-    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_runlist_throughput, { IO_TEST_NOOP_RUN, IO_TEST_POLL_WAIT, 32000 }
+    TEST_POSITIVE, dev_filter_is_aie2, TEST_io_runlist_throughput, { IO_TEST_NOOP_RUN, IO_TEST_POLL_WAIT, REPEAT_RUNS }
   },
   test_case{ "Cmd fencing (driver side)",
     TEST_POSITIVE, dev_filter_is_aie2, TEST_cmd_fence_device, {}

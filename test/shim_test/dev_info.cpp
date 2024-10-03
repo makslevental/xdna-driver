@@ -208,7 +208,7 @@ get_xclbin_name(device* dev)
 std::string
 get_xclbin_workspace(device* dev, const char *xclbin_name)
 {
-  return (cur_path + "/../" + get_xclbin_info(dev, xclbin_name).workspace);
+  return ("/home/mlevental/dev_projects/my-xdna-driver/" + get_xclbin_info(dev, xclbin_name).workspace);
 }
 
 std::string

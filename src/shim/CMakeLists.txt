@@ -12,6 +12,7 @@ add_library(${XDNA_TARGET} SHARED
   ${MAIN_SOURCES}
   ${KMQ_SOURCES}
   ${UMQ_SOURCES}
+  shim_debug.cpp
   )
 
 set_target_properties(${XDNA_TARGET} PROPERTIES
