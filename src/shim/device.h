@@ -4,17 +4,21 @@
 #ifndef PCIE_DEVICE_LINUX_XDNA_H
 #define PCIE_DEVICE_LINUX_XDNA_H
 
-#include "pcidev.h"
-#include "shim.h"
 #include "shim_debug.h"
-
+#include "core/pcie/linux/device_linux.h"
 #include "core/common/ishim.h"
 
 namespace shim_xdna {
+class pdev;
 
 class device : public xrt_core::noshim<xrt_core::device_pcie>
 {
-private:
+public:
+  // device index type
+  using id_type = unsigned int;
+  using slot_id = uint32_t;
+  using handle_type = void*;
+
   // Private look up function for concrete query::request
   const xrt_core::query::request&
   lookup_query(xrt_core::query::key_type query_key) const override;
@@ -23,7 +27,6 @@ private:
 
   std::map<uint32_t, xrt_core::buffer_handle *> m_bo_map;
 
-protected:
   virtual std::unique_ptr<xrt_core::hwctx_handle>
   create_hw_context(const device& dev,
     const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos) const = 0;
@@ -31,7 +34,6 @@ protected:
   virtual std::unique_ptr<xrt_core::buffer_handle>
   import_bo(xrt_core::shared_handle::export_handle ehdl) const = 0;
 
-public:
   device(const pdev& pdev, handle_type shim_handle, id_type device_id);
 
   ~device();
@@ -44,7 +46,6 @@ public:
     size_t size, uint64_t flags) = 0;
 
 // ISHIM APIs supported are listed below
-public:
   void
   close_device() override;
 

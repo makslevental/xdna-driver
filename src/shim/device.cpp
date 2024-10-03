@@ -3,6 +3,7 @@
 
 #include "bo.h"
 #include "device.h"
+#include "shim.h"
 #include "hwctx.h"
 #include "fence.h"
 
@@ -18,10 +19,10 @@ namespace {
 namespace query = xrt_core::query;
 using key_type = query::key_type;
 
-inline std::shared_ptr<xrt_core::pci::dev>
+inline std::shared_ptr<shim_xdna::pdev>
 get_pcidev(const xrt_core::device* device)
 {
-  auto pdev = xrt_core::pci::get_dev(device->get_device_id(), device->is_userpf());
+  auto pdev = shim_xdna::get_dev(device->get_device_id(), device->is_userpf());
   if (!pdev)
     throw xrt_core::error("Invalid device handle");
   return pdev;
@@ -40,13 +41,13 @@ template <typename ValueType>
 struct sysfs_fcn
 {
   static ValueType
-  get(const std::shared_ptr<xrt_core::pci::dev>& dev, const std::string& entry)
+  get(const std::shared_ptr<shim_xdna::pdev>& dev, const std::string& entry)
   {
     return get(dev, "", entry.c_str());
   }
 
   static ValueType
-  get(const std::shared_ptr<xrt_core::pci::dev>& dev, const char* subdev, const char* entry)
+  get(const std::shared_ptr<shim_xdna::pdev>& dev, const char* subdev, const char* entry)
   {
     std::string err;
     ValueType value;
@@ -58,7 +59,7 @@ struct sysfs_fcn
   }
 
   static void
-  put(const std::shared_ptr<xrt_core::pci::dev>& dev, const char* subdev, const char* entry, ValueType value)
+  put(const std::shared_ptr<shim_xdna::pdev>& dev, const char* subdev, const char* entry, ValueType value)
   {
     std::string err;
     dev->sysfs_put(subdev, entry, err, value);
@@ -73,13 +74,13 @@ struct sysfs_fcn<std::string>
   using ValueType = std::string;
 
   static std::string
-  get(const std::shared_ptr<xrt_core::pci::dev>& dev, const std::string& entry)
+  get(const std::shared_ptr<shim_xdna::pdev>& dev, const std::string& entry)
   {
     return get(dev, "", entry.c_str());
   }
 
   static std::string
-  get(const std::shared_ptr<xrt_core::pci::dev>& dev, const std::string& subdev, const std::string& entry)
+  get(const std::shared_ptr<shim_xdna::pdev>& dev, const std::string& subdev, const std::string& entry)
   {
     std::string err;
     std::string value;
@@ -91,7 +92,7 @@ struct sysfs_fcn<std::string>
   }
 
   static void
-  put(const std::shared_ptr<xrt_core::pci::dev>& dev, const std::string& subdev, const std::string& entry, const ValueType& value)
+  put(const std::shared_ptr<shim_xdna::pdev>& dev, const std::string& subdev, const std::string& entry, const ValueType& value)
   {
     std::string err;
     dev->sysfs_put(subdev, entry, err, value);

@@ -24,7 +24,7 @@ wait_cmd(const shim_xdna::pdev& pdev, const shim_xdna::hw_ctx *ctx,
   auto boh = static_cast<shim_xdna::bo*>(cmd);
   auto id = boh->get_cmd_id();
 
-  shim_debug("Waiting for cmd (%ld)...", id);
+  shim_xdna::shim_debug("Waiting for cmd (%ld)...", id);
 
   amdxdna_drm_wait_cmd wcmd = {
     .hwctx = ctx->get_slotidx(),

@@ -2,33 +2,37 @@
 // Created by mlevental on 10/3/24.
 //
 
-#include "get_user_pf.h"
-
-#include "../../src/shim/pcidrv.h"
-#include "core/common/device.h"
+#include "shim.h"
+#include "pcidrv.h"
+#include "device.h"
+#include "pcidev.h"
 
 #include <filesystem>
 #include <fstream>
 
-namespace {
+namespace  {
 
-static std::map<xrt_core::device::handle_type, std::weak_ptr<xrt_core::device>>
+static std::map<shim_xdna::device::handle_type, std::weak_ptr<shim_xdna::device>>
     userpf_device_map;
 
-static std::vector<std::shared_ptr<xrt_core::pci::dev>> user_ready_list;
+static std::vector<std::shared_ptr<shim_xdna::pdev>> user_ready_list;
 
 // mutex to protect insertion
 static std::mutex mutex;
 
 } // namespace
 
-void add_to_user_ready_list(const std::shared_ptr<xrt_core::pci::dev>& dev) {
+namespace shim_xdna {
+void add_to_user_ready_list(const std::shared_ptr<shim_xdna::pdev> &dev) {
   user_ready_list.push_back(dev);
 }
 
-std::shared_ptr<xrt_core::device>
-my_get_userpf_device(xrt_core::device::handle_type handle)
-{
+std::shared_ptr<shim_xdna::pdev> get_dev(unsigned index, bool user) {
+  return user_ready_list.at(index);
+}
+
+std::shared_ptr<shim_xdna::device>
+my_get_userpf_device(shim_xdna::device::handle_type handle) {
   std::lock_guard lk(mutex);
   auto itr = userpf_device_map.find(handle);
   if (itr != userpf_device_map.end())
@@ -36,13 +40,13 @@ my_get_userpf_device(xrt_core::device::handle_type handle)
   return nullptr;
 }
 
-std::shared_ptr<xrt_core::device>
-my_get_userpf_device(xrt_core::device::handle_type handle, xrt_core::device::id_type id)
-{
+std::shared_ptr<shim_xdna::device>
+my_get_userpf_device(shim_xdna::device::handle_type handle,
+                     shim_xdna::device::id_type id) {
   // Check device map cache
   if (auto device = my_get_userpf_device(handle)) {
     if (device->get_device_id() != id)
-        throw std::runtime_error("my_get_userpf_device: id mismatch");
+      throw std::runtime_error("my_get_userpf_device: id mismatch");
     return device;
   }
 
@@ -50,14 +54,15 @@ my_get_userpf_device(xrt_core::device::handle_type handle, xrt_core::device::id_
   auto device = pdev->create_device(handle, id);
 
   std::lock_guard lk(mutex);
-  userpf_device_map[handle] = device;  // create or replace
+  userpf_device_map[handle] = device; // create or replace
   return device;
 }
 
-std::shared_ptr<xrt_core::device> my_get_userpf_device(xrt_core::device::id_type id) {
+std::shared_ptr<shim_xdna::device>
+my_get_userpf_device(shim_xdna::device::id_type id) {
   // Construct device by calling xclOpen, the returned
   // device is cached and unmanaged
-  const auto& pdev = user_ready_list.at(id);
+  const auto &pdev = user_ready_list.at(id);
   auto device = my_get_userpf_device(pdev->create_shim(id));
 
   if (!device)
@@ -67,8 +72,8 @@ std::shared_ptr<xrt_core::device> my_get_userpf_device(xrt_core::device::id_type
   // Repackage raw ptr in new shared ptr with deleter that calls xclClose,
   // but leaves device object alone. The returned device is managed in that
   // it calls xclClose when going out of scope.
-  auto close = [](xrt_core::device *d) { d->close_device(); };
-  std::shared_ptr<xrt_core::device> ptr{device.get(), close};
+  auto close = [](shim_xdna::device *d) { d->close_device(); };
+  std::shared_ptr<shim_xdna::device> ptr{device.get(), close};
 
   // The repackage raw ptr is the one that should be cached so
   // so that all references to device handles in application code
@@ -76,4 +81,5 @@ std::shared_ptr<xrt_core::device> my_get_userpf_device(xrt_core::device::id_type
   std::lock_guard lk(mutex);
   userpf_device_map[device->get_device_handle()] = ptr;
   return ptr;
+}
 }

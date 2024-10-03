@@ -38,7 +38,7 @@ map_parent_range(size_t size)
 {
   auto p = ::mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (!p)
-    shim_err(errno, "mmap(len=%ld) failed", size);
+    shim_xdna::shim_err(errno, "mmap(len=%ld) failed", size);
 
   return p;
 }
@@ -116,7 +116,7 @@ void *
 addr_align(void *p, size_t align)
 {
     if (!is_power_of_two(align))
-        shim_err(EINVAL, "Alignment 0x%lx is not power of two", align);
+        shim_xdna::shim_err(EINVAL, "Alignment 0x%lx is not power of two", align);
 
     return (void *)(((uintptr_t)p + align) & ~(align - 1));
 }

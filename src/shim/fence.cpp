@@ -2,6 +2,7 @@
 // Copyright (C) 2024, Advanced Micro Devices, Inc. All rights reserved.
 
 #include "fence.h"
+#include "pcidev.h"
 #include "drm_local/amdxdna_accel.h"
 #include <limits>
 

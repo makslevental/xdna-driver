@@ -14,7 +14,7 @@ debugf(const char* format,...);
 
 # define XRT_PRINTF(format,...) debugf(format, ##__VA_ARGS__)
 
-namespace {
+namespace shim_xdna {
 
 template <typename ...Args>
 [[ noreturn ]] void

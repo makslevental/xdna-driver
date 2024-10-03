@@ -14,10 +14,11 @@
 #include "dlfcn.h"
 
 #include "../../src/shim/pcidrv.h"
+#include "../../src/shim/kmq/pcidev.h"
 #include "core/common/query_requests.h"
 #include "core/common/sysinfo.h"
 #include "core/common/system.h"
-#include "../../src/shim/get_user_pf.h"
+#include "../../src/shim/shim.h"
 
 #include <filesystem>
 #include <libgen.h>
@@ -235,11 +236,11 @@ TEST_create_destroy_hw_context(device::id_type id, std::shared_ptr<device> sdev,
 
   // Try opening device and creating ctx twice
   {
-    auto dev = my_get_userpf_device(id);
+    auto dev = shim_xdna::my_get_userpf_device(id);
     hw_ctx hwctx{dev.get()};
   }
   {
-    auto dev = my_get_userpf_device(id);
+    auto dev = shim_xdna::my_get_userpf_device(id);
     hw_ctx hwctx{dev.get()};
   }
 }
@@ -634,7 +635,7 @@ run_test(int id, const test_case& test, bool force, const device::id_type& num_o
       test.func(0, nullptr, test.arg);
     } else { // per user device test
       for (device::id_type i = 0; i < num_of_devices; i++) {
-        auto dev = ::my_get_userpf_device(i);
+        auto dev = shim_xdna::my_get_userpf_device(i);
         if (!force && !test.dev_filter(i, dev.get()))
           continue;
         skipped = false;
@@ -710,9 +711,10 @@ main(int argc, char **argv)
     return 2;
   }
 
-  auto driver = std::make_shared<shim_xdna::drv>();
+  std::shared_ptr<shim_xdna::drv> driver = std::make_shared<shim_xdna::drv>();
   const sfs::path drvpath = "/sys/bus/pci/drivers/amdxdna/0000:c5:00.1";
-  auto pf = driver->create_pcidev(drvpath.filename().string());
+  std::shared_ptr<shim_xdna::pdev> pf = std::make_shared<shim_xdna::pdev_kmq>(driver, drvpath.filename().string());
+
   add_to_user_ready_list(pf);
 
   cur_path = dirname(argv[0]);

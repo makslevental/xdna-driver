@@ -4,34 +4,27 @@
 #ifndef _PCIDRV_XDNA_H_
 #define _PCIDRV_XDNA_H_
 
-#include "pcidev.h"
-
-#include "core/pcie/linux/pcidrv.h"
-
 #include <string>
 
 namespace shim_xdna {
 
-class drv : public xrt_core::pci::drv
+class drv
 {
 public:
   std::string
-  name() const override;
+  name() const;
 
   bool
-  is_user() const override;
+  is_user() const;
 
   std::string
-  dev_node_prefix() const override;
+  dev_node_prefix() const;
 
   std::string
-  dev_node_dir() const override;
+  dev_node_dir() const;
 
   std::string
-  sysfs_dev_node_dir() const override;
-
-  std::shared_ptr<xrt_core::pci::dev>
-  create_pcidev(const std::string& sysfs) const override;
+  sysfs_dev_node_dir() const;
 };
 
 } // namespace shim_xdna

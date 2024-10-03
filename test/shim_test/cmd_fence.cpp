@@ -11,7 +11,7 @@
 
 #include "core/common/shim/fence_handle.h"
 #include "core/common/system.h"
-#include "../../src/shim/get_user_pf.h"
+#include "../../src/shim/shim.h"
 #include <algorithm>
 
 namespace {
@@ -42,7 +42,7 @@ private:
       return;
     msg("Received cmd fence fd %d %d from pid %d", idata.shdl, idata.whdl, idata.pid);
 
-    auto dev = my_get_userpf_device(get_dev_id());
+    auto dev = shim_xdna::my_get_userpf_device(get_dev_id());
     auto wfence = dev->import_fence(idata.pid, idata.whdl);
     auto sfence = dev->import_fence(idata.pid, idata.shdl);
 
@@ -62,7 +62,7 @@ private:
   {
     msg("user fence test started...");
 
-    auto dev = my_get_userpf_device(get_dev_id());
+    auto dev = shim_xdna::my_get_userpf_device(get_dev_id());
     auto sfence = dev->create_fence(fence_handle::access_mode::process);
     auto wfence = dev->create_fence(fence_handle::access_mode::process);
     auto sshare = sfence->share();
@@ -104,7 +104,7 @@ private:
       return;
     msg("Received cmd fence fd %d from pid %d", idata.hdl, idata.pid);
 
-    auto dev = my_get_userpf_device(get_dev_id());
+    auto dev = shim_xdna::my_get_userpf_device(get_dev_id());
     auto fence = dev->import_fence(idata.pid, idata.hdl);
     const std::vector<xrt_core::fence_handle*> wfences{fence.get()};
     const std::vector<xrt_core::fence_handle*> sfences{};
@@ -124,7 +124,7 @@ private:
   {
     msg("device fence test started...");
 
-    auto dev = my_get_userpf_device(get_dev_id());
+    auto dev = shim_xdna::my_get_userpf_device(get_dev_id());
     auto fence = dev->create_fence(fence_handle::access_mode::process);
     const std::vector<xrt_core::fence_handle*> sfences{fence.get()};
     const std::vector<xrt_core::fence_handle*> wfences{};

@@ -27,9 +27,9 @@ pdev_kmq::
   shim_debug("Destroying KMQ pcidev");
 }
 
-std::shared_ptr<xrt_core::device>
+std::shared_ptr<shim_xdna::device>
 pdev_kmq::
-create_device(xrt_core::device::handle_type handle, xrt_core::device::id_type id) const
+create_device(shim_xdna::device::handle_type handle, shim_xdna::device::id_type id) const
 {
   auto dev = std::make_shared<device_kmq>(*this, handle, id);
   try {

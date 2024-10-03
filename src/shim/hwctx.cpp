@@ -22,7 +22,7 @@ get_pdi(const xrt_core::xclbin::aie_partition_obj& aie, uint16_t kernel_id)
       }
     }
   }
-  shim_err(ENOENT, "PDI for kernel ID 0x%x not found", kernel_id);
+  shim_xdna::shim_err(ENOENT, "PDI for kernel ID 0x%x not found", kernel_id);
 }
 
 }

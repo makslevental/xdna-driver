@@ -18,7 +18,7 @@ print_cu_config(amdxdna_hwctx_param_config_cu *config)
   auto conf = config->cu_configs;
 
   for (uint16_t i = 0; i < n; i++)
-    shim_debug("CU_CONF: bo %d func=%d", conf[i].cu_bo, conf[i].cu_func);
+    shim_xdna::shim_debug("CU_CONF: bo %d func=%d", conf[i].cu_bo, conf[i].cu_func);
 }
 
 }

@@ -36,7 +36,7 @@ clflush_data(const void *base, size_t offset, size_t len)
   if (!cacheline_size) {
     long sz = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
     if (sz <= 0)
-      shim_err(EINVAL, "Invalid cache line size: %ld", sz);
+      shim_xdna::shim_err(EINVAL, "Invalid cache line size: %ld", sz);
     cacheline_size = sz;
   }
 

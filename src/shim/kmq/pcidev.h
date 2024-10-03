@@ -15,8 +15,8 @@ public:
   pdev_kmq(std::shared_ptr<const drv> driver, std::string sysfs_name);
   ~pdev_kmq();
  
-  std::shared_ptr<xrt_core::device>
-  create_device(xrt_core::device::handle_type handle, xrt_core::device::id_type id) const override;
+  std::shared_ptr<shim_xdna::device>
+  create_device(shim_xdna::device::handle_type handle, shim_xdna::device::id_type id) const override;
 
 private:
   // Create on first device creation and removed right before device is closed

@@ -19,9 +19,9 @@ pdev_umq::
   shim_debug("Destroying UMQ pcidev");
 }
 
-std::shared_ptr<xrt_core::device>
+std::shared_ptr<shim_xdna::device>
 pdev_umq::
-create_device(xrt_core::device::handle_type handle, xrt_core::device::id_type id) const
+create_device(shim_xdna::device::handle_type handle, shim_xdna::device::id_type id) const
 {
   return std::make_shared<device_umq>(*this, handle, id);
 }
