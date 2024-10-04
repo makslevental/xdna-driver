@@ -23,8 +23,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/version.cmake)
 # For saving all built artifacts for quick testing purpose
 # Should be redirected/prefixed by DESTDIR in make command line
 # Can only be used with cmake install() command
-set(XDNA_BIN_DIR /bins)
-
+include(GNUInstallDirs)
 add_subdirectory(src)
 
 # By default, build/build.sh downloads binaries to build/amdxdna_bins/

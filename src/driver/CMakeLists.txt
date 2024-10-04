@@ -5,7 +5,7 @@ set(XDNA_DRV amdxdna)
 
 set(XDNA_DRV_DIR amdxdna)
 set(XDNA_DRV_TGT ${XDNA_DRV}.ko)
-set(XDNA_DRV_PATH ${CMAKE_BINARY_DIR}/driver/${XDNA_DRV_TGT})
+set(XDNA_DRV_PATH ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_DRV_TGT})
 set(XDNA_DRV_BLD_DIR driver/${XDNA_DRV_DIR})
 set(XDNA_DRV_BLD_SRC ${CMAKE_CURRENT_BINARY_DIR}/${XDNA_DRV_BLD_DIR})
 set(XDNA_DRV_BLD_TGT ${CMAKE_CURRENT_BINARY_DIR}/${XDNA_DRV_DIR})
@@ -49,34 +49,35 @@ file(GLOB_RECURSE ALL_DRV_FILES
   ${XDNA_DRV_BLD_SRC}/*.h
   ${CMAKE_CURRENT_BINARY_DIR}/include/*.h
   )
-set(XDNA_DRV_SRC_TGT ${XDNA_DRV}.tar)
-add_custom_command(
-  OUTPUT ${CMAKE_BINARY_DIR}/driver/${XDNA_DRV_SRC_TGT}
-  COMMENT "Tar ${XDNA_DRV} driver source code"
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND tar ${XDNA_DRV_EXCLUDES} -cf ${CMAKE_CURRENT_BINARY_DIR}/${XDNA_DRV_SRC_TGT} ${XDNA_DRV_SRC_DIR}
-  COMMAND $(CMAKE_COMMAND) -E copy ${CMAKE_CURRENT_BINARY_DIR}/${XDNA_DRV_SRC_TGT} ${CMAKE_BINARY_DIR}/driver/${XDNA_DRV_SRC_TGT}
-  DEPENDS ${ALL_DRV_FILES}
-  )
 
-# Substitute driver version in the source code
-set(XDNA_TAR_GZ ${XDNA_DRV}.tar.gz)
-add_custom_command(
-  OUTPUT ${CMAKE_BINARY_DIR}/driver/${XDNA_TAR_GZ}
-  COMMENT "Substitute amdxdna module version and re-tar"
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/driver
-  COMMAND $(CMAKE_COMMAND) -E make_directory tmp
-  COMMAND tar xf ${CMAKE_BINARY_DIR}/driver/${XDNA_DRV_SRC_TGT} -C tmp
-  COMMAND find tmp -name amdxdna_pci_drv.c -exec sed -i 's/MODULE_VERSION\(\".*\"\)/MODULE_VERSION\(\"${XRT_PLUGIN_VERSION_STRING}_${XDNA_DATE},${XDNA_HASH}\"\)/' {} \\\;
-  COMMAND tar zcf ${CMAKE_BINARY_DIR}/driver/${XDNA_TAR_GZ} -C tmp .
-  COMMAND $(CMAKE_COMMAND) -E rm -r tmp
-  DEPENDS ${CMAKE_BINARY_DIR}/driver/${XDNA_DRV_SRC_TGT}
-  )
-add_custom_target(driver_ver_tarball ALL DEPENDS ${CMAKE_BINARY_DIR}/driver/${XDNA_TAR_GZ} driver)
-install(FILES ${CMAKE_BINARY_DIR}/driver/${XDNA_TAR_GZ}
-  DESTINATION xrt/${XDNA_COMPONENT}
-  COMPONENT ${XDNA_COMPONENT}
-  )
+#set(XDNA_DRV_SRC_TGT ${XDNA_DRV}.tar)
+#add_custom_command(
+#  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_DRV_SRC_TGT}
+#  COMMENT "Tar ${XDNA_DRV} driver source code"
+#  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#  COMMAND tar ${XDNA_DRV_EXCLUDES} -cf ${CMAKE_CURRENT_BINARY_DIR}/${XDNA_DRV_SRC_TGT} ${XDNA_DRV_SRC_DIR}
+#  COMMAND $(CMAKE_COMMAND) -E copy ${CMAKE_CURRENT_BINARY_DIR}/${XDNA_DRV_SRC_TGT} ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_DRV_SRC_TGT}
+#  DEPENDS ${ALL_DRV_FILES}
+#  )
+#
+## Substitute driver version in the source code
+#set(XDNA_TAR_GZ ${XDNA_DRV}.tar.gz)
+#add_custom_command(
+#  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_TAR_GZ}
+#  COMMENT "Substitute amdxdna module version and re-tar"
+#  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/driver
+#  COMMAND $(CMAKE_COMMAND) -E make_directory tmp
+#  COMMAND tar xf ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_DRV_SRC_TGT} -C tmp
+#  COMMAND find tmp -name amdxdna_pci_drv.c -exec sed -i 's/MODULE_VERSION\(\".*\"\)/MODULE_VERSION\(\"${XRT_PLUGIN_VERSION_STRING}_${XDNA_DATE},${XDNA_HASH}\"\)/' {} \\\;
+#  COMMAND tar zcf ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_TAR_GZ} -C tmp .
+#  COMMAND $(CMAKE_COMMAND) -E rm -r tmp
+#  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_DRV_SRC_TGT}
+#  )
+#add_custom_target(driver_ver_tarball ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_TAR_GZ} driver)
+#install(FILES ${CMAKE_CURRENT_BINARY_DIR}/driver/${XDNA_TAR_GZ}
+#  DESTINATION xrt/${XDNA_COMPONENT}
+#  COMPONENT ${XDNA_COMPONENT}
+#  )
 
 # Install config file and driver related scripts for packaging
 set(XDNA_DKMS_PKG_NAME xrt-${XDNA_DRV})
@@ -102,4 +103,4 @@ install(FILES ${amdxdna_drv_tools}
   )
 
 # install .ko for testing
-install(FILES ${XDNA_DRV_PATH} DESTINATION ${XDNA_BIN_DIR}/driver)
+install(FILES ${XDNA_DRV_PATH} DESTINATION ${CMAKE_INSTALL_LIBDIR})

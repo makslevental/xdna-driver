@@ -4,7 +4,6 @@
 #include "bo.h"
 #include "device.h"
 #include "hwctx.h"
-#include "drm_local/amdxdna_accel.h"
 
 namespace shim_xdna {
 

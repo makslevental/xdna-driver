@@ -13,7 +13,6 @@
 #include "bo.h"
 
 #include "../../src/shim/pcidrv.h"
-#include "../../src/shim/kmq/pcidev.h"
 #include "../../src/shim/shim.h"
 
 #include <filesystem>
@@ -42,7 +41,7 @@ void TEST_txn_elf_flow(shim_xdna::device::id_type, std::shared_ptr<shim_xdna::de
 void TEST_cmd_fence_host(shim_xdna::device::id_type, std::shared_ptr<shim_xdna::device>, arg_type&);
 void TEST_cmd_fence_device(shim_xdna::device::id_type, std::shared_ptr<shim_xdna::device>, arg_type&);
 
-#define REPEAT_RUNS 1
+#define REPEAT_RUNS 100
 
 namespace {
 
@@ -123,8 +122,7 @@ dev_filter_is_aie2(shim_xdna::device::id_type id, shim_xdna::device* dev)
   if (!is_xdna_dev(dev))
     return false;
   //  auto device_id = device_query<query::pcie_device>(dev);
-  uint16_t device_id = 5378;
-  return device_id == npu1_device_id || device_id == npu2_device_id;
+  return get_device_id() == npu1_device_id || get_device_id() == npu2_device_id;
 }
 
 bool
@@ -133,8 +131,7 @@ dev_filter_is_aie4(shim_xdna::device::id_type id, shim_xdna::device* dev)
   if (!is_xdna_dev(dev))
     return false;
   //  auto device_id = device_query<query::pcie_device>(dev);
-  uint16_t device_id = 5378;
-  return device_id == npu3_device_id || device_id == npu3_device_id1;
+  return get_device_id() == npu3_device_id || get_device_id() == npu3_device_id1;
 }
 
 bool
@@ -687,6 +684,33 @@ run_all_test(std::set<int>& tests)
 
 namespace sfs = std::filesystem;
 
+std::string read_sysfs(const std::string& filename) {
+  std::ifstream file(filename);
+  std::string line;
+  if (file.is_open()) {
+    std::getline(file, line);
+    file.close();
+  } else {
+    std::cerr << "Error opening file: " << filename << std::endl;
+    line = "";
+  }
+  return line;
+}
+
+std::filesystem::path find_npu_device() {
+  const sfs::path drvpath = "/sys/bus/pci/drivers/amdxdna";
+  for (auto const &dir_entry : std::filesystem::directory_iterator{drvpath})
+    if (dir_entry.is_symlink()) {
+      std::cout << dir_entry.path() << '\n';
+      auto actual_path = drvpath / std::filesystem::read_symlink(dir_entry);
+      auto rel = std::filesystem::relative(actual_path, "/sys/devices");
+      if (!rel.empty() && rel.native()[0] != '.')
+        return absolute(actual_path);
+    }
+  std::cerr << "No npu device found" << std::endl;
+  exit(-1);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -713,10 +737,14 @@ main(int argc, char **argv)
     return 2;
   }
 
-  std::shared_ptr<shim_xdna::drv> driver = std::make_shared<shim_xdna::drv>();
-  const sfs::path drvpath = "/sys/bus/pci/drivers/amdxdna/0000:c5:00.1";
-  std::shared_ptr<shim_xdna::pdev> pf = std::make_shared<shim_xdna::pdev_kmq>(driver, drvpath.filename().string());
+  auto device_path = find_npu_device();
+  std::string device_id = read_sysfs(device_path / "device");
+  std::string revision_id = read_sysfs(device_path / "revision");
+  set_device_id(std::stoi(device_id, 0, 16));
+  set_revision_id(std::stoi(revision_id, 0, 16));
 
+  std::shared_ptr<shim_xdna::drv> driver = std::make_shared<shim_xdna::drv>();
+  std::shared_ptr<shim_xdna::pdev> pf = driver->create_pcidev(device_path.filename());
   add_to_user_ready_list(pf);
 
   cur_path = dirname(argv[0]);

@@ -37,12 +37,12 @@ configure_file(
   @ONLY
   )
 
-install(TARGETS ${XDNA_XRT_TEST} DESTINATION ${XDNA_BIN_DIR}/bin)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/xrt_test DESTINATION ${XDNA_BIN_DIR}/bin)
+install(TARGETS ${XDNA_XRT_TEST} DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/xrt_test DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${AMDXDNA_BINS_DIR}/workspaces/NPU3_1x4_TESTCASES \
-  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu3_workspace \
-  )"
-  )
+#install(CODE "execute_process( \
+#  COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#  ${AMDXDNA_BINS_DIR}/workspaces/NPU3_1x4_TESTCASES \
+#  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu3_workspace \
+#  )"
+#  )

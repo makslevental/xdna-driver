@@ -28,6 +28,11 @@ const uint16_t npu4_revision_id = 0x10;
 const uint16_t npu5_revision_id = 0x11;
 const uint16_t npu6_revision_id = 0x20;
 
+void set_device_id(uint16_t id);
+uint16_t get_device_id();
+void set_revision_id(uint16_t id);
+uint16_t get_revision_id();
+
 const xclbin_info& get_xclbin_info(shim_xdna::device* dev, const char *xclbin_name=nullptr);
 std::string get_xclbin_name(shim_xdna::device* dev);
 std::string get_xclbin_workspace(shim_xdna::device* dev, const char *xclbin_name=nullptr);

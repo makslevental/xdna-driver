@@ -114,6 +114,31 @@ bo_kmq(const device& device, hw_ctx::slot_id ctx_id,
     sync(direction::host2device, size, 0);
 
   attach_to_ctx();
+#ifndef NDEBUG
+  switch (m_flags) {
+    case 0x0:
+      shim_debug("allocating dev heap");
+      break;
+    case 0x1000000:
+      // pdi bo
+      shim_debug("allocating pdi bo");
+      break;
+    case 0x20000000:
+      // XCL_BO_FLAGS_P2P in create_free_bo test
+      shim_debug("allocating XCL_BO_FLAGS_P2P");
+      break;
+    case 0x80000000:
+      // XCL_BO_FLAGS_EXECBUF in create_free_bo test
+      shim_debug("allocating XCL_BO_FLAGS_EXECBUF");
+      break;
+    case 0x1001000000:
+      // debug bo
+      shim_debug("allocating debug bo");
+      break;
+    default:
+      shim_err(-1, "unknown flags %d", flags);
+  }
+#endif
 
   shim_debug("Allocated KMQ BO (userptr=0x%lx, size=%ld, flags=0x%llx, type=%d, drm_bo=%d)",
     m_aligned, m_aligned_size, m_flags, m_type, get_drm_bo_handle());

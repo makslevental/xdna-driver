@@ -5,10 +5,11 @@
 #define _PCIDRV_XDNA_H_
 
 #include <string>
+#include <memory>
 
 namespace shim_xdna {
-
-class drv
+class pdev;
+class drv : public std::enable_shared_from_this<drv>
 {
 public:
   std::string
@@ -25,6 +26,9 @@ public:
 
   std::string
   sysfs_dev_node_dir() const;
+
+  std::shared_ptr<pdev>
+  create_pcidev(const std::string& sysfs) const;
 };
 
 } // namespace shim_xdna

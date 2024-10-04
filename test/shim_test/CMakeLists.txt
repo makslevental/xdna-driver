@@ -41,56 +41,56 @@ configure_file(
   @ONLY
   )
 
-install(TARGETS ${XDNA_SHIM_TEST} DESTINATION ${XDNA_BIN_DIR}/bin)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/shim_test DESTINATION ${XDNA_BIN_DIR}/bin)
+install(TARGETS ${XDNA_SHIM_TEST} DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/shim_test DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${AMDXDNA_BINS_DIR}/workspaces/NPU1_1x4_TESTCASES \
-  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu1_workspace \
-  )"
-  )
-
-install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${AMDXDNA_BINS_DIR}/workspaces/NPU2_1x4_TESTCASES \
-  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu2_workspace \
-  )"
-  )
-
-install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${AMDXDNA_BINS_DIR}/workspaces/NPU3_1x4_TESTCASES \
-  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu3_workspace \
-  )"
-  )
-
-install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${AMDXDNA_BINS_DIR}/workspaces/NPU4_1x4_TESTCASES \
-  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu4_workspace \
-  )"
-  )
-
-install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${AMDXDNA_BINS_DIR}/workspaces/NPU5_1x4_TESTCASES \
-  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu5_workspace \
-  )"
-  )
-
-install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${AMDXDNA_BINS_DIR}/workspaces/NPU6_1x4_TESTCASES \
-  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu6_workspace \
-  )"
-  )
-
-# Set up symlink for local shim test case data
-set(XDNA_SHIM_TEST_DATA_DIR local_shim_test_data)
-install(CODE "execute_process( \
-  COMMAND ${CMAKE_COMMAND} -E create_symlink \
-  ${AMDXDNA_BINS_DIR}/${XDNA_SHIM_TEST_DATA_DIR} \
-  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/${XDNA_SHIM_TEST_DATA_DIR} \
-  )"
-  )
+#install(CODE "execute_process( \
+#  COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#  ${AMDXDNA_BINS_DIR}/workspaces/NPU1_1x4_TESTCASES \
+#  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu1_workspace \
+#  )"
+#  )
+#
+#install(CODE "execute_process( \
+#  COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#  ${AMDXDNA_BINS_DIR}/workspaces/NPU2_1x4_TESTCASES \
+#  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu2_workspace \
+#  )"
+#  )
+#
+#install(CODE "execute_process( \
+#  COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#  ${AMDXDNA_BINS_DIR}/workspaces/NPU3_1x4_TESTCASES \
+#  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu3_workspace \
+#  )"
+#  )
+#
+#install(CODE "execute_process( \
+#  COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#  ${AMDXDNA_BINS_DIR}/workspaces/NPU4_1x4_TESTCASES \
+#  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu4_workspace \
+#  )"
+#  )
+#
+#install(CODE "execute_process( \
+#  COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#  ${AMDXDNA_BINS_DIR}/workspaces/NPU5_1x4_TESTCASES \
+#  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu5_workspace \
+#  )"
+#  )
+#
+#install(CODE "execute_process( \
+#  COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#  ${AMDXDNA_BINS_DIR}/workspaces/NPU6_1x4_TESTCASES \
+#  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/npu6_workspace \
+#  )"
+#  )
+#
+## Set up symlink for local shim test case data
+#set(XDNA_SHIM_TEST_DATA_DIR local_shim_test_data)
+#install(CODE "execute_process( \
+#  COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#  ${AMDXDNA_BINS_DIR}/${XDNA_SHIM_TEST_DATA_DIR} \
+#  ${CMAKE_BINARY_DIR}/${XDNA_BIN_DIR}/${XDNA_SHIM_TEST_DATA_DIR} \
+#  )"
+#  )

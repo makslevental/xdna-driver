@@ -11,6 +11,7 @@
 #include "../../src/shim/ert.h"
 #include <regex>
 #include <string>
+#include <cstring>
 
 using namespace xrt_core;
 using arg_type = const std::vector<uint64_t>;

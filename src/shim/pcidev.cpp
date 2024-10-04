@@ -3,7 +3,7 @@
 
 #include "pcidev.h"
 #include "device.h"
-#include "drm_local/amdxdna_accel.h"
+#include "amdxdna_accel.h"
 #include "pcidrv.h"
 #include "shim.h"
 #include "shim_debug.h"

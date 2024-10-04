@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2022-2024, Advanced Micro Devices, Inc. All rights reserved.
 //
-#include "drm_local/amdxdna_accel.h"
-#include "pcidev.h"
 #include "pcidrv.h"
+#include "amdxdna_accel.h"
+#include "kmq/pcidev.h"
+#include "pcidev.h"
+#include "umq/pcidev.h"
 #include <fstream>
 
 namespace {
@@ -60,6 +62,19 @@ drv::
 is_user() const
 {
   return true;
+}
+
+std::shared_ptr<pdev>
+drv::
+create_pcidev(const std::string& sysfs) const
+{
+  auto t = get_dev_type(sysfs);
+  auto driver = std::static_pointer_cast<const drv>(shared_from_this());
+  if (t == AMDXDNA_DEV_TYPE_KMQ)
+    return std::make_shared<pdev_kmq>(driver, sysfs);
+  if (t == AMDXDNA_DEV_TYPE_UMQ)
+    return std::make_shared<pdev_umq>(driver, sysfs);
+  shim_err(-EINVAL, "Unknown device type: %d", t);
 }
 
 } // namespace shim_xdna

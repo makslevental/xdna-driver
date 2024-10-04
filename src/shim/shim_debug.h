@@ -42,10 +42,12 @@ template <typename ...Args>
 void
 shim_debug(const char* fmt, Args&&... args)
 {
+#ifndef NDEBUG
   std::string format = "";
   format += std::string(fmt);
   format += "\n";
   XRT_PRINTF(format.c_str(), std::forward<Args>(args)...);
+#endif
 }
 
 template <typename ...Args>

@@ -6,6 +6,7 @@
 
 #include "bo.h"
 
+#include <array>
 #include <memory>
 
 enum io_test_bo_type {

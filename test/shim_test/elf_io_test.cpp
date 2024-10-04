@@ -118,7 +118,7 @@ TEST_txn_elf_flow(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna::devi
   bo bo_ctrl_code{dev, instr_size, XCL_BO_FLAGS_CACHEABLE};
   bo bo_exec_buf{dev, 0x1000ul, XCL_BO_FLAGS_EXECBUF};
   //  auto dev_id = device_query<query::pcie_device>(dev);
-  uint16_t dev_id = 5378;
+  uint16_t dev_id = get_device_id();
   if (dev_id == npu1_device_id)
     prepare_cmd_npu1(bo_exec_buf, elf, bo_ctrl_code, bo_ifm, bo_wts, bo_ofm);
   else if (dev_id == npu2_device_id)

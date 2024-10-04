@@ -11,7 +11,7 @@
 #include "shared.h"
 #include "shim_debug.h"
 
-#include "../include/uapi/drm_local/amdxdna_accel.h"
+#include "amdxdna_accel.h"
 #include <string>
 #include <atomic>
 

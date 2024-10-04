@@ -5,6 +5,8 @@ set(XDNA_TARGET xrt_driver_xdna)
 set(XRT_CORE_TARGET xrt_core)
 set(XRT_COREUTIL_TARGET xrt_coreutil)
 
+set_target_properties(${XRT_COREUTIL_TARGET} PROPERTIES OUTPUT_NAME "shim_${XRT_COREUTIL_TARGET}")
+
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} MAIN_SOURCES)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/kmq KMQ_SOURCES)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/umq UMQ_SOURCES)
@@ -15,6 +17,11 @@ add_library(${XDNA_TARGET} SHARED
   shim_debug.cpp
   get_user_pf.cpp
   )
+
+file(GLOB _headers "${CMAKE_CURRENT_LIST_DIR}/*.h")
+target_sources(${XDNA_TARGET} PUBLIC
+  FILE_SET HEADERS
+  FILES ${_headers})
 
 set_target_properties(${XDNA_TARGET} PROPERTIES
   VERSION ${XRT_PLUGIN_VERSION_STRING}
@@ -51,7 +58,7 @@ target_include_directories(${XDNA_TARGET} PRIVATE
 # driver plugin will be loaded while xrt_core is still being
 # dlopen'ed, symbols against libxrt_core.so can't be solved
 # at that time, so need to be fully solved here.
-target_link_libraries(${XDNA_TARGET} PRIVATE
+target_link_libraries(${XDNA_TARGET} PUBLIC
   ${XRT_COREUTIL_TARGET}
   uuid
   )
@@ -60,10 +67,55 @@ target_link_options(${XDNA_TARGET} PRIVATE
   "-Wl,-z,defs"
   )
 
-# install components for packaging
-install(TARGETS ${XDNA_TARGET} DESTINATION xrt/lib COMPONENT ${XDNA_COMPONENT})
+install(
+  TARGETS ${XDNA_TARGET} ${XRT_COREUTIL_TARGET}
+  EXPORT ShimXDNATargets
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+  FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shim_xdna
+)
 
-# install components for testing
-install(TARGETS ${XRT_CORE_TARGET} DESTINATION ${XDNA_BIN_DIR}/lib)
-install(TARGETS ${XRT_COREUTIL_TARGET} DESTINATION ${XDNA_BIN_DIR}/lib)
-install(TARGETS ${XDNA_TARGET} DESTINATION ${XDNA_BIN_DIR}/lib)
+install(EXPORT ShimXDNATargets
+  FILE ShimXDNATargets.cmake
+  DESTINATION lib/cmake/ShimXDNA
+  NAMESPACE ShimXDNA::
+)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/ShimXDNAConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/ShimXDNA"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/ShimXDNAConfigVersion.cmake"
+  VERSION "${XRT_PLUGIN_VERSION_STRING}"
+  COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/ShimXDNAConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/ShimXDNAConfigVersion.cmake
+  DESTINATION lib/cmake/ShimXDNA
+)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/ShimXDNAConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/ShimXDNA"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/ShimXDNAConfigVersion.cmake"
+  VERSION "${XRT_PLUGIN_VERSION_STRING}"
+  COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/ShimXDNAConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/ShimXDNAConfigVersion.cmake
+  DESTINATION lib/cmake/ShimXDNA
+)

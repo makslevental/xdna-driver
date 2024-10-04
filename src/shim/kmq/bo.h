@@ -5,7 +5,7 @@
 #define _BO_KMQ_H_
 
 #include "../bo.h"
-#include "drm_local/amdxdna_accel.h"
+#include "../amdxdna_accel.h"
 
 #include <set>
 

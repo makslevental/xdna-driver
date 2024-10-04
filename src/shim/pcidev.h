@@ -40,7 +40,7 @@ public:
   std::shared_ptr<const drv> m_driver;
   
   pdev(std::shared_ptr<const drv> driver, std::string sysfs_name);
-  ~pdev();
+  virtual ~pdev();
 
   using id_type = unsigned int;
   using slot_id = uint32_t;

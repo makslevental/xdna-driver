@@ -27,7 +27,7 @@ void add_to_user_ready_list(const std::shared_ptr<shim_xdna::pdev> &dev) {
   user_ready_list.push_back(dev);
 }
 
-std::shared_ptr<shim_xdna::pdev> get_dev(unsigned index, bool user) {
+std::shared_ptr<shim_xdna::pdev> get_dev(unsigned index) {
   return user_ready_list.at(index);
 }
 
@@ -50,7 +50,7 @@ my_get_userpf_device(shim_xdna::device::handle_type handle,
     return device;
   }
 
-  auto pdev = user_ready_list.at(id);
+  auto pdev = get_dev(id);
   auto device = pdev->create_device(handle, id);
 
   std::lock_guard lk(mutex);
@@ -62,7 +62,7 @@ std::shared_ptr<shim_xdna::device>
 my_get_userpf_device(shim_xdna::device::id_type id) {
   // Construct device by calling xclOpen, the returned
   // device is cached and unmanaged
-  const auto &pdev = user_ready_list.at(id);
+  const auto &pdev = get_dev(id);
   auto device = my_get_userpf_device(pdev->create_shim(id));
 
   if (!device)

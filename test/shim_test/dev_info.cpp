@@ -9,6 +9,26 @@ extern std::string cur_path;
 // Force to use xclbin pointed to by this path
 extern std::string xclbin_path;
 
+static uint16_t _device_id = 0;
+static uint16_t _revision_id = 0;
+
+void set_device_id(uint16_t id) {
+  _device_id = id;
+}
+
+uint16_t get_device_id() {
+  return _device_id;
+}
+
+void set_revision_id(uint16_t id) {
+  _revision_id = id;
+}
+
+uint16_t get_revision_id() {
+  return _revision_id;
+}
+
+
 namespace {
 
 xclbin_info xclbin_infos[] = {
@@ -190,7 +210,7 @@ const xclbin_info&
 get_xclbin_info(shim_xdna::device* dev, const char *xclbin_name)
 {
   //  auto pci_dev_id = device_query<query::pcie_device>(dev);
-  uint16_t pci_dev_id = 5378;
+  uint16_t pci_dev_id = get_device_id();
   //  auto revision_id = device_query<query::pcie_id>(dev).revision_id;
   uint8_t revision_id = 0;
   for (auto& xclbin : xclbin_infos) {

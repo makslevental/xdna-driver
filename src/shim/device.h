@@ -38,13 +38,9 @@ public:
 
   class xclbin_map
   {
-  public:
-
-  private:
+    public:
     std::map<slot_id, xrt::uuid> m_slot2uuid;
     std::map<xrt::uuid, xrt::xclbin> m_xclbins;
-
-  public:
     // Reset the slot -> uuid mapping based on quieried slot info data
     void
     reset(std::map<slot_id, xrt::uuid>&& slot2uuid)
@@ -118,9 +114,9 @@ public:
   virtual std::unique_ptr<bo>
   import_bo(shim_xdna::shared_handle::export_handle ehdl) const = 0;
 
-  device(const pdev& pdev, handle_type shim_handle, id_type device_id);
+  device(const pdev &pdev, handle_type shim_handle, id_type device_id);
 
-  ~device();
+  virtual ~device();
 
   const pdev&
   get_pdev() const;

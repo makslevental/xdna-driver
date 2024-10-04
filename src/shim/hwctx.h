@@ -9,7 +9,7 @@
 #include "shim_debug.h"
 #include "cuidx_type.h"
 
-#include "../include/uapi/drm_local/amdxdna_accel.h"
+#include "amdxdna_accel.h"
 
 namespace shim_xdna {
 
@@ -27,7 +27,22 @@ public:
     shared = 1
   };
   using slot_id = uint32_t;
-  
+  const device& m_device;
+  slot_id m_handle = AMDXDNA_INVALID_CTX_HANDLE;
+  amdxdna_qos_info m_qos = {};
+  struct cu_info {
+    std::string m_name;
+    size_t m_func;
+    std::vector<uint8_t> m_pdi;
+  };
+  std::vector<cu_info> m_cu_info;
+  std::unique_ptr<hw_q> m_q;
+  uint32_t m_ops_per_cycle;
+  uint32_t m_num_cols;
+  uint32_t m_doorbell;
+  std::unique_ptr<bo> m_log_bo;
+  void *m_log_buf;
+
   hw_ctx(const device& dev, const qos_type& qos, std::unique_ptr<hw_q> q, const xrt::xclbin& xclbin);
 
   virtual ~hw_ctx();
@@ -66,19 +81,11 @@ public:
   exec_buf(bo *)
   { shim_not_supported_err(__func__); }
 
-public:
   uint32_t
   get_doorbell() const;
 
-protected:
   const device&
   get_device();
-
-  struct cu_info {
-    std::string m_name;
-    size_t m_func;
-    std::vector<uint8_t> m_pdi;
-  };
 
   const std::vector<cu_info>&
   get_cu_info() const;
@@ -97,18 +104,6 @@ protected:
 
   void
   fini_log_buf();
-
-private:
-  const device& m_device;
-  slot_id m_handle = AMDXDNA_INVALID_CTX_HANDLE;
-  amdxdna_qos_info m_qos = {};
-  std::vector<cu_info> m_cu_info;
-  std::unique_ptr<hw_q> m_q;
-  uint32_t m_ops_per_cycle;
-  uint32_t m_num_cols;
-  uint32_t m_doorbell;
-  std::unique_ptr<bo> m_log_bo;
-  void *m_log_buf;
 
   void
   delete_ctx_on_device();
