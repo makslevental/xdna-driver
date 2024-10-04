@@ -5,8 +5,6 @@
 #include "hwq.h"
 #include "bo.h"
 
-#include "core/common/memalign.h"
-
 namespace shim_xdna {
 
 hw_ctx_umq::

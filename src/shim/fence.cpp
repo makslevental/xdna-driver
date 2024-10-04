@@ -4,7 +4,6 @@
 #include "fence.h"
 #include "pcidev.h"
 #include "hwctx.h"
-#include "drm_local/amdxdna_accel.h"
 #include <limits>
 
 namespace {

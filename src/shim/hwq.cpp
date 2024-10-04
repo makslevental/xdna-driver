@@ -5,7 +5,6 @@
 #include "hwq.h"
 #include "fence.h"
 #include "shim_debug.h"
-#include "core/common/trace.h"
 
 namespace {
 
@@ -93,7 +92,6 @@ poll_command(shim_xdna::bo *cmd) const
   auto cmdpkt = reinterpret_cast<ert_packet *>(cmd->map(shim_xdna::bo::map_type::write));
 
   if (cmdpkt->state >= ERT_CMD_STATE_COMPLETED) {
-    XRT_TRACE_POINT_LOG(poll_command_done);
     return 1;
   }
   return 0;

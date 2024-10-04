@@ -8,8 +8,6 @@
 #include "fence.h"
 #include "shim_debug.h"
 
-#include "core/common/shim/hwqueue_handle.h"
-
 namespace shim_xdna {
 class bo;
 class hw_q

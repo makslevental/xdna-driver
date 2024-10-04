@@ -5,7 +5,6 @@
 #define _DEVICE_KMQ_H_
 
 #include "../device.h"
-#include "core/common/memalign.h"
 
 namespace shim_xdna {
 

@@ -5,9 +5,6 @@
 #include "hwq.h"
 #include "../bo.h"
 
-#include "core/common/config_reader.h"
-#include "core/common/memalign.h"
-
 namespace {
 
 // For debug only

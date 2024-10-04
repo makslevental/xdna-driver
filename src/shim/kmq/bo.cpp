@@ -2,7 +2,6 @@
 // Copyright (C) 2023-2024, Advanced Micro Devices, Inc. All rights reserved.
 
 #include "bo.h"
-#include "core/common/config_reader.h"
 #include <x86intrin.h>
 
 namespace {
@@ -69,7 +68,7 @@ is_driver_sync()
   static int drv_sync = -1;
 
   if (drv_sync == -1) {
-    bool ds = xrt_core::config::detail::get_bool_value("Debug.force_driver_sync", false);
+    bool ds = std::getenv("Debug.force_driver_sync");
     drv_sync = ds ? 1 : 0;
   }
   return drv_sync == 1;

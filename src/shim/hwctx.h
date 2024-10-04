@@ -8,7 +8,6 @@
 #include "shared.h"
 #include "shim_debug.h"
 
-#include "core/common/shim/hwctx_handle.h"
 #include "../include/uapi/drm_local/amdxdna_accel.h"
 
 namespace shim_xdna {

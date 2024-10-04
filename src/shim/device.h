@@ -6,8 +6,7 @@
 
 #include "shim_debug.h"
 #include "fence.h"
-#include "core/pcie/linux/device_linux.h"
-#include "core/common/ishim.h"
+#include "core/common/query_requests.h"
 
 namespace shim_xdna {
 class pdev;

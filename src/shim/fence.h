@@ -7,8 +7,8 @@
 #include "shared.h"
 
 #include "shim_debug.h"
-#include "core/common/shim/fence_handle.h"
 #include <mutex>
+#include <vector>
 
 namespace shim_xdna {
 class pdev;

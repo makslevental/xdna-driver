@@ -11,8 +11,10 @@
 #include <cstdio>
 #include <cstring>
 #include <dirent.h>
+#include <fcntl.h>
 #include <fstream>
 #include <sstream>
+#include <sys/ioctl.h>
 
 namespace sfs = std::filesystem;
 

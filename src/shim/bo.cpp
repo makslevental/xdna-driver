@@ -3,6 +3,7 @@
 
 #include "bo.h"
 #include "shim_debug.h"
+#include <fcntl.h>
 #include <unistd.h>
 
 namespace {
