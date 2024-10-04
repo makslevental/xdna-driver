@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023-2024, Advanced Micro Devices, Inc. All rights reserved.
 
-#include "bo.h"
 #include "hwq.h"
+#include "bo.h"
+#include "ert.h"
 #include "fence.h"
 #include "shim_debug.h"
 
@@ -34,8 +35,8 @@ wait_cmd(const shim_xdna::pdev& pdev, const shim_xdna::hw_ctx *ctx,
   try {
     pdev.ioctl(DRM_IOCTL_AMDXDNA_WAIT_CMD, &wcmd);
   }
-  catch (const xrt_core::system_error& ex) {
-    if (ex.get_code() != ETIME)
+  catch (const std::system_error& ex) {
+    if (ex.code().value() != ETIME)
       throw;
     else
       ret = 0;

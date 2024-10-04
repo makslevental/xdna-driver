@@ -2,6 +2,7 @@
 // Copyright (C) 2024, Advanced Micro Devices, Inc. All rights reserved.
 
 #include "dev_info.h"
+#include <cstring>
 
 // Test program location, all workspace paths below are relative to it
 extern std::string cur_path;

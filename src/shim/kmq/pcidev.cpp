@@ -37,8 +37,8 @@ create_device(shim_xdna::device::handle_type handle, shim_xdna::device::id_type 
     // No locking is needed since driver will ensure only one heap BO is created.
     if (m_dev_heap_bo == nullptr)
       m_dev_heap_bo = std::make_unique<bo_kmq>(*dev, dev_mem_size, AMDXDNA_BO_DEV_HEAP);
-  } catch (const xrt_core::system_error& ex) {
-    if (ex.get_code() != EBUSY)
+  } catch (const std::system_error& ex) {
+    if (ex.code().value() != EBUSY)
       throw;
   }
   return dev;

@@ -11,16 +11,16 @@
 #include "hwctx.h"
 #include "speed.h"
 #include "bo.h"
-#include "dlfcn.h"
 
 #include "../../src/shim/pcidrv.h"
 #include "../../src/shim/kmq/pcidev.h"
-#include "core/common/query_requests.h"
 #include "../../src/shim/shim.h"
 
 #include <filesystem>
 #include <libgen.h>
 #include <fstream>
+#include <iostream>
+#include <cstring>
 #include <set>
 
 std::string cur_path;
@@ -478,18 +478,18 @@ std::vector<test_case> test_list {
   //test_case{ "get_mgmtpf_device",
   //  TEST_POSITIVE, no_dev_filter, TEST_get_mgmtpf_device, {}
   //},
-  test_case{ "query(pcie_vendor)",
-    TEST_POSITIVE, dev_filter_xdna, TEST_query_userpf<query::pcie_vendor>, {}
-  },
+//  test_case{ "query(pcie_vendor)",
+//    TEST_POSITIVE, dev_filter_xdna, TEST_query_userpf<query::pcie_vendor>, {}
+//  },
   //test_case{ "non_xdna_userpf: query(pcie_vendor)",
   //  TEST_POSITIVE, dev_filter_not_xdna, TEST_query_userpf<query::pcie_vendor>, {}
   //},
-  test_case{ "query(rom_vbnv)",
-    TEST_POSITIVE, dev_filter_xdna, TEST_query_userpf<query::rom_vbnv>, {}
-  },
-  test_case{ "query(rom_fpga_name)",
-    TEST_NEGATIVE, dev_filter_xdna, TEST_query_userpf<query::rom_fpga_name>, {}
-  },
+//  test_case{ "query(rom_vbnv)",
+//    TEST_POSITIVE, dev_filter_xdna, TEST_query_userpf<query::rom_vbnv>, {}
+//  },
+//  test_case{ "query(rom_fpga_name)",
+//    TEST_NEGATIVE, dev_filter_xdna, TEST_query_userpf<query::rom_fpga_name>, {}
+//  },
   //test_case{ "non_xdna_userpf: query(rom_vbnv)",
   //  TEST_POSITIVE, dev_filter_not_xdna, TEST_query_userpf<query::rom_vbnv>, {}
   //},

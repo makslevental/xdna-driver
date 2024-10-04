@@ -52,10 +52,8 @@ target_include_directories(${XDNA_TARGET} PRIVATE
 # dlopen'ed, symbols against libxrt_core.so can't be solved
 # at that time, so need to be fully solved here.
 target_link_libraries(${XDNA_TARGET} PRIVATE
-  xrt_core
-  core_pcielinux_objects
-  ${XRT_CORE_TARGET}
   ${XRT_COREUTIL_TARGET}
+  uuid
   )
 
 target_link_options(${XDNA_TARGET} PRIVATE

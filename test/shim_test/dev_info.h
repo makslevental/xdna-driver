@@ -4,8 +4,8 @@
 #ifndef _SHIMTEST_DEV_INFO_H_
 #define _SHIMTEST_DEV_INFO_H_
 
+#include "../../src/shim/cuidx_type.h"
 #include "../../src/shim/device.h"
-#include "core/common/query_requests.h"
 
 using namespace xrt_core;
 

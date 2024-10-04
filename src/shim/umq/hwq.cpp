@@ -2,6 +2,7 @@
 // Copyright (C) 2023-2024, Advanced Micro Devices, Inc. All rights reserved.
 
 #include <x86intrin.h>
+#include <cstring>
 #include "bo.h"
 #include "../bo.h"
 #include "hwq.h"

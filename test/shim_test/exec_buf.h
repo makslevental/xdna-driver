@@ -6,13 +6,13 @@
 
 #include "bo.h"
 
-#include "experimental/xrt_elf.h"
-#include "experimental/xrt_module.h"
+#include "../../src/shim/ert.h"
+// needed for XRT_CORE_COMMON_EXPORT in module_int...............
+#include "core/common/config.h"
 #include "core/common/api/module_int.h"
 
-#include "core/include/ert.h"
-#include "core/common/cuidx_type.h"
 #include <cstring>
+#include <iomanip>
 
 class exec_buf {
 public:

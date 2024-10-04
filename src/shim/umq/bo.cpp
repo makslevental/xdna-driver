@@ -37,7 +37,7 @@ umq_flags_to_type(uint64_t bo_flags)
 namespace shim_xdna {
 
 bo_umq::
-bo_umq(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
+bo_umq(const device& device, hw_ctx::slot_id ctx_id,
   size_t size, uint64_t flags)
   : bo_umq(device, ctx_id, size, flags, umq_flags_to_type(flags))
 {
@@ -46,7 +46,7 @@ bo_umq(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
 }
 
 bo_umq::
-bo_umq(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
+bo_umq(const device& device, hw_ctx::slot_id ctx_id,
   size_t size, uint64_t flags, amdxdna_bo_type type)
   : bo(device, ctx_id, size, flags, type)
 {

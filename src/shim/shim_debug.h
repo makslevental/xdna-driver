@@ -4,10 +4,10 @@
 #ifndef SHIM_DEBUG_H
 #define SHIM_DEBUG_H
 
-#include "core/common/error.h"
 #include <cstdio>
 #include <memory>
 #include <unistd.h>
+#include <system_error>
 
 void
 debugf(const char* format,...);
@@ -24,12 +24,12 @@ shim_err(int err, const char* fmt, Args&&... args)
   format += " (err=%d)";
   int sz = std::snprintf(nullptr, 0, format.c_str(), args ..., err) + 1;
   if(sz <= 0)
-    throw xrt_core::system_error(sz, "could not format error string");
+    throw std::system_error(sz, std::system_category(), "could not format error string");
 
   auto size = static_cast<size_t>(sz);
   std::unique_ptr<char[]> buf(new char[size]);
   std::snprintf(buf.get(), size, format.c_str(), args ..., err);
-  throw xrt_core::system_error(err, std::string(buf.get()));
+  throw std::system_error(err, std::system_category(), std::string(buf.get()));
 }
 
 [[ noreturn ]] inline void

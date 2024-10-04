@@ -23,7 +23,7 @@ device_kmq::
 
 std::unique_ptr<hw_ctx>
 device_kmq::
-create_hw_context(const device& dev, const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos) const
+create_hw_context(const device& dev, const xrt::xclbin& xclbin, const hw_ctx::qos_type& qos) const
 {
   return std::make_unique<hw_ctx_kmq>(dev, xclbin, qos);
 }

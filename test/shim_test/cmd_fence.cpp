@@ -6,8 +6,6 @@
 #include "hwctx.h"
 #include "2proc.h"
 #include "dev_info.h"
-#include "exec_buf.h"
-#include "io_config.h"
 
 #include "../../src/shim/shim.h"
 #include "../../src/shim/hwq.h"
@@ -21,14 +19,14 @@ using arg_type = const std::vector<uint64_t>;
 class test_2proc_cmd_fence_host : public test_2proc
 {
 public:
-  test_2proc_cmd_fence_host(device::id_type id) : test_2proc(id)
+  test_2proc_cmd_fence_host(shim_xdna::device::id_type id) : test_2proc(id)
   {}
 
 private:
   struct ipc_data {
     pid_t pid;
-    shared_handle::export_handle shdl; // for signaling
-    shared_handle::export_handle whdl; // for waiting
+    shim_xdna::shared_handle::export_handle shdl; // for signaling
+    shim_xdna::shared_handle::export_handle whdl; // for waiting
   };
 
   void
@@ -84,13 +82,13 @@ private:
 class test_2proc_cmd_fence_device : public test_2proc
 {
 public:
-  test_2proc_cmd_fence_device(device::id_type id) : test_2proc(id)
+  test_2proc_cmd_fence_device(shim_xdna::device::id_type id) : test_2proc(id)
   {}
 
 private:
   struct ipc_data {
     pid_t pid;
-    shared_handle::export_handle hdl;
+    shim_xdna::shared_handle::export_handle hdl;
   };
 
   void
@@ -148,7 +146,7 @@ private:
 }
 
 void
-TEST_cmd_fence_host(device::id_type id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_cmd_fence_host(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   // Can't fork with opened device.
   sdev.reset();
@@ -158,7 +156,7 @@ TEST_cmd_fence_host(device::id_type id, std::shared_ptr<shim_xdna::device> sdev,
 }
 
 void
-TEST_cmd_fence_device(device::id_type id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_cmd_fence_device(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   // Can't fork with opened device.
   sdev.reset();

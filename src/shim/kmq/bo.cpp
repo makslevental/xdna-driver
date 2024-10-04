@@ -79,7 +79,7 @@ is_driver_sync()
 namespace shim_xdna {
 
 bo_kmq::
-bo_kmq(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
+bo_kmq(const device& device, hw_ctx::slot_id ctx_id,
   size_t size, uint64_t flags)
   : bo_kmq(device, ctx_id, size, flags, flag_to_type(flags))
 {
@@ -94,7 +94,7 @@ bo_kmq(const device& device, size_t size, amdxdna_bo_type type)
 }
 
 bo_kmq::
-bo_kmq(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
+bo_kmq(const device& device, hw_ctx::slot_id ctx_id,
   size_t size, uint64_t flags, amdxdna_bo_type type)
   : bo(device, ctx_id, size, flags, type)
 {
@@ -139,7 +139,7 @@ bo_kmq::
     detach_from_ctx();
     // If BO is in use, we should block and wait in driver
     free_bo();
-  } catch (const xrt_core::system_error& e) {
+  } catch (const std::system_error& e) {
     shim_debug("Failed to free BO: %s", e.what());
   }
 }

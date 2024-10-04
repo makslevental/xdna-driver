@@ -6,7 +6,9 @@
 
 #include "shim_debug.h"
 #include "fence.h"
-#include "core/common/query_requests.h"
+#include "xrt_uuid.h"
+#include <map>
+#include "experimental/xrt_xclbin.h"
 
 namespace shim_xdna {
 class pdev;
@@ -26,6 +28,13 @@ public:
   id_type m_device_id;
   xrt::xclbin m_xclbin;                       // currently loaded xclbin  (single-slot, default)
   mutable std::mutex m_mutex;
+
+  using cfg_param_type = std::map<std::string, uint32_t>;
+  using qos_type = cfg_param_type; //alias to old type
+  enum class access_mode : uint8_t {
+    exclusive = 0,
+    shared = 1
+  };
 
   class xclbin_map
   {
@@ -56,7 +65,7 @@ public:
     {
       auto itr = m_xclbins.find(uuid);
       if (itr == m_xclbins.end())
-        throw xrt_core::error("No xclbin with uuid '" + uuid.to_string() + "'");
+        throw std::system_error(EINVAL, std::system_category(), "No xclbin with uuid '" + uuid.to_string() + "'");
 
       return (*itr).second;
     }
@@ -68,7 +77,7 @@ public:
     {
       auto itr = m_slot2uuid.find(slot);
       if (itr == m_slot2uuid.end())
-        throw xrt_core::error("No xclbin in slot");
+        throw std::system_error(EINVAL, std::system_category(), "No xclbin in slot");
 
       return get((*itr).second);
     }
@@ -98,17 +107,13 @@ public:
 
   xrt::xclbin get_xclbin(const xrt::uuid& xclbin_id) const;
 
-  // Private look up function for concrete query::request
-  const xrt_core::query::request&
-  lookup_query(xrt_core::query::key_type query_key) const;
-
   const pdev& m_pdev; // The pcidev that this device object is derived from
 
   std::map<uint32_t, bo *> m_bo_map;
 
   virtual std::unique_ptr<hw_ctx>
   create_hw_context(const device& dev,
-    const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos) const = 0;
+    const xrt::xclbin& xclbin, const qos_type& qos) const = 0;
 
   virtual std::unique_ptr<bo>
   import_bo(shim_xdna::shared_handle::export_handle ehdl) const = 0;
@@ -138,21 +143,11 @@ public:
   import_bo(pid_t, shim_xdna::shared_handle::export_handle);
 
   std::unique_ptr<hw_ctx>
-  create_hw_context(const xrt::uuid& xclbin_uuid, const xrt::hw_context::qos_type& qos,
-    xrt::hw_context::access_mode mode) const;
+  create_hw_context(const xrt::uuid& xclbin_uuid, const qos_type& qos,
+    access_mode mode) const;
 
   void
   register_xclbin(const xrt::xclbin& xclbin) const;
-
-  void
-  open_aie_context(xrt::aie::access_mode)
-  {
-    // return success everytime as this flow doesn't support
-    // calling driver to open aie context
-    // this is to satisfy xrt::aie::device class constructor
-    // which calls open_aie_context of ishim
-    return;
-  }
 
   std::vector<char>
   read_aie_mem(uint16_t col, uint16_t row, uint32_t offset, uint32_t size);
@@ -171,12 +166,6 @@ public:
 
   std::unique_ptr<shim_xdna::fence_handle>
   import_fence(pid_t, shim_xdna::shared_handle::export_handle);
-
-  void
-  load_axlf(const axlf* buffer);
-
-  void
-  load_xclbin(const xrt::xclbin& xclbin);
 
   void
   record_xclbin(const xrt::xclbin& xclbin);

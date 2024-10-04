@@ -178,7 +178,7 @@ fence_handle::
   shim_debug("Fence going away: %d@%ld", m_syncobj_hdl, m_state);
   try {
     destroy_syncobj(m_pdev, m_syncobj_hdl);
-  } catch (const xrt_core::system_error& e) {
+  } catch (const std::system_error& e) {
     shim_debug("Failed to destroy fence_handle");
   }
 }

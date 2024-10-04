@@ -42,7 +42,7 @@ public:
   {
   }
 
-  bo(shim_xdna::device* dev, pid_t pid, shared_handle::export_handle ehdl)
+  bo(shim_xdna::device* dev, pid_t pid, shim_xdna::shared_handle::export_handle ehdl)
     : m_dev(dev)
   {
     m_handle = m_dev->import_bo(pid, ehdl);

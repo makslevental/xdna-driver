@@ -4,9 +4,8 @@
 #include "bo.h"
 #include "hwctx.h"
 #include "hwq.h"
+#include <cstring>
 
-#include "core/common/xclbin_parser.h"
-#include "core/common/query_requests.h"
 #include "core/common/api/xclbin_int.h"
 
 namespace {
@@ -42,7 +41,7 @@ hw_ctx::
 {
   try {
     delete_ctx_on_device();
-  } catch (const xrt_core::system_error& e) {
+  } catch (const std::system_error& e) {
     shim_debug("Failed to delete context on device: %s", e.what());
   }
   shim_debug("Destroyed HW context (%d)...", m_handle);
@@ -158,8 +157,8 @@ parse_xclbin(const xrt::xclbin& xclbin)
           .m_func = props.functional,
           .m_pdi = get_pdi(aie_partition, props.kernel_id) } );
       }
-    } catch (xrt_core::system_error &ex) {
-      if (ex.get_code() != ENOENT)
+    } catch (std::system_error &ex) {
+      if (ex.code().value() != ENOENT)
         throw;
       shim_debug("%s", ex.what());
       continue;

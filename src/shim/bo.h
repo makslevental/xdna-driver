@@ -11,8 +11,6 @@
 #include "shared.h"
 #include "shim_debug.h"
 
-#include "core/common/memalign.h"
-#include "core/common/shim/buffer_handle.h"
 #include "../include/uapi/drm_local/amdxdna_accel.h"
 #include <string>
 #include <atomic>
@@ -92,7 +90,7 @@ public:
     uint64_t kmhdl;  // kernel mode handle
   };
 
-  bo(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
+  bo(const device& device, hw_ctx::slot_id ctx_id,
     size_t size, uint64_t flags, amdxdna_bo_type type);
   bo(const device& device, uint32_t ctx_id, size_t size, uint64_t flags);
   bo(const device& device, shim_xdna::shared_handle::export_handle ehdl);
@@ -193,7 +191,7 @@ public:
 
   // Used when exclusively assigned to a HW context. By default, BO is shared
   // among all HW contexts.
-  xrt_core::hwctx_handle::slot_id m_owner_ctx_id = AMDXDNA_INVALID_CTX_HANDLE;
+  hw_ctx::slot_id m_owner_ctx_id = AMDXDNA_INVALID_CTX_HANDLE;
 };
 
 } // namespace shim_xdna

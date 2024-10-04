@@ -7,6 +7,7 @@
 #include <cstdarg>
 #include <csignal>
 #include <sys/wait.h>
+#include <iostream>
 
 class test_2proc {
 public:

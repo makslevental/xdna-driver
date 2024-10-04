@@ -21,7 +21,7 @@ public:
 protected:
   std::unique_ptr<hw_ctx>
   create_hw_context(const device& dev, const xrt::xclbin& xclbin,
-    const xrt::hw_context::qos_type& qos) const override;
+    const qos_type& qos) const override;
 
   std::unique_ptr<bo>
   import_bo(shim_xdna::shared_handle::export_handle ehdl) const override;

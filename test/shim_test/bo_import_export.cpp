@@ -21,7 +21,7 @@ public:
 private:
   struct ipc_data {
     pid_t pid;
-    shared_handle::export_handle hdl;
+    shim_xdna::shared_handle::export_handle hdl;
   };
 
   void

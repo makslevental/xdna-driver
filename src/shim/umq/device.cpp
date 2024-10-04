@@ -22,14 +22,14 @@ device_umq::
 
 std::unique_ptr<hw_ctx>
 device_umq::
-create_hw_context(const device& dev, const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos) const
+create_hw_context(const device& dev, const xrt::xclbin& xclbin, const hw_ctx::qos_type& qos) const
 {
   return std::make_unique<hw_ctx_umq>(dev, xclbin, qos);
 }
 
 std::unique_ptr<bo>
 device_umq::
-alloc_bo(void* userptr, xrt_core::hwctx_handle::slot_id ctx_id,
+alloc_bo(void* userptr, hw_ctx::slot_id ctx_id,
   size_t size, uint64_t flags)
 {
   if (userptr)

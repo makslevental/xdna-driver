@@ -8,8 +8,9 @@
 #include "io_param.h"
 
 #include "../../src/shim/hwq.h"
-#include <string>
+#include "../../src/shim/ert.h"
 #include <regex>
+#include <string>
 
 using namespace xrt_core;
 using arg_type = const std::vector<uint64_t>;

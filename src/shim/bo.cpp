@@ -143,7 +143,7 @@ bo::drm_bo::
     return;
   try {
     free_drm_bo(m_parent.m_pdev, m_handle);
-  } catch (const xrt_core::system_error& e) {
+  } catch (const std::system_error& e) {
     shim_debug("Failed to free DRM BO: %s", e.what());
   }
 }
@@ -276,7 +276,7 @@ bo(const device& device, uint32_t ctx_id, size_t size, uint64_t flags)
 }
 
 bo::
-bo(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
+bo(const device& device, hw_ctx::slot_id ctx_id,
   size_t size, uint64_t flags, amdxdna_bo_type type)
   : m_pdev(device.get_pdev())
   , m_aligned_size(size)

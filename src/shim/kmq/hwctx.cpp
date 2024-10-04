@@ -2,8 +2,9 @@
 // Copyright (C) 2023-2024, Advanced Micro Devices, Inc. All rights reserved.
 
 #include "hwctx.h"
-#include "hwq.h"
 #include "../bo.h"
+#include "hwq.h"
+#include <cstring>
 
 namespace {
 
@@ -23,7 +24,7 @@ print_cu_config(amdxdna_hwctx_param_config_cu *config)
 namespace shim_xdna {
 
 hw_ctx_kmq::
-hw_ctx_kmq(const device& device, const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos)
+hw_ctx_kmq(const device& device, const xrt::xclbin& xclbin, const hw_ctx::qos_type& qos)
   : hw_ctx(device, qos, std::make_unique<hw_q_kmq>(device), xclbin)
 {
   hw_ctx::create_ctx_on_device();

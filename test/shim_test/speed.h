@@ -5,6 +5,7 @@
 #define _SHIMTEST_SPEED_H_
 
 #include <chrono>
+#include <iomanip>
 
 using clk = std::chrono::high_resolution_clock;
 using ms_t = std::chrono::milliseconds;

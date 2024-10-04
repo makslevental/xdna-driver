@@ -7,6 +7,7 @@
 #include "device.h"
 #include "shared.h"
 #include "shim_debug.h"
+#include "cuidx_type.h"
 
 #include "../include/uapi/drm_local/amdxdna_accel.h"
 
@@ -19,8 +20,12 @@ class device; // forward declaration
 class hw_ctx
 {
 public:
-  using qos_type = xrt::hw_context::cfg_param_type;
-  using access_mode = xrt::hw_context::access_mode;
+  using cfg_param_type = std::map<std::string, uint32_t>;
+  using qos_type = cfg_param_type; //alias to old type
+  enum class access_mode : uint8_t {
+    exclusive = 0,
+    shared = 1
+  };
   using slot_id = uint32_t;
   
   hw_ctx(const device& dev, const qos_type& qos, std::unique_ptr<hw_q> q, const xrt::xclbin& xclbin);

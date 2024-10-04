@@ -8,7 +8,7 @@
 namespace shim_xdna {
 
 hw_ctx_umq::
-hw_ctx_umq(const device& device, const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos)
+hw_ctx_umq(const device& device, const xrt::xclbin& xclbin, const hw_ctx::qos_type& qos)
   : hw_ctx(device, qos, std::make_unique<hw_q_umq>(device, 8), xclbin)
 {
   hw_ctx::init_log_buf();

@@ -6,6 +6,7 @@
 
 #include "dev_info.h"
 #include "../../src/shim/hwctx.h"
+#include <iostream>
 
 
 using namespace xrt_core;
@@ -41,8 +42,8 @@ private:
     }
     dev->record_xclbin(xclbin);
     auto xclbin_uuid = xclbin.get_uuid();
-    xrt::hw_context::qos_type qos{ {"gops", 100} };
-    xrt::hw_context::access_mode mode = xrt::hw_context::access_mode::shared;
+    shim_xdna::device::qos_type qos{ {"gops", 100} };
+    shim_xdna::device::access_mode mode = shim_xdna::device::access_mode::shared;
 
     m_handle = dev->create_hw_context(xclbin_uuid, qos, mode);
     std::cout << "loaded " << xclbin_path << std::endl;
