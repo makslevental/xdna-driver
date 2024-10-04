@@ -17,6 +17,8 @@ class hw_q
 public:
   hw_q(const device& device);
 
+  virtual ~hw_q() = default;
+
   void
   submit_command(bo *);
 

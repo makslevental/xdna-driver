@@ -21,16 +21,16 @@ device_kmq::
   shim_debug("Destroying KMQ device (%s) ...", get_pdev().m_sysfs_name.c_str());
 }
 
-std::unique_ptr<xrt_core::hwctx_handle>
+std::unique_ptr<hw_ctx>
 device_kmq::
 create_hw_context(const device& dev, const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos) const
 {
   return std::make_unique<hw_ctx_kmq>(dev, xclbin, qos);
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 device_kmq::
-alloc_bo(void* userptr, xrt_core::hwctx_handle::slot_id ctx_id,
+alloc_bo(void* userptr, hw_ctx::slot_id ctx_id,
   size_t size, uint64_t flags)
 {
   if (userptr)
@@ -39,7 +39,7 @@ alloc_bo(void* userptr, xrt_core::hwctx_handle::slot_id ctx_id,
   return std::make_unique<bo_kmq>(*this, ctx_id, size, flags);
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 device_kmq::
 import_bo(xrt_core::shared_handle::export_handle ehdl) const
 {

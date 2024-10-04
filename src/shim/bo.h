@@ -13,7 +13,7 @@
 
 #include "core/common/memalign.h"
 #include "core/common/shim/buffer_handle.h"
-#include "drm_local/amdxdna_accel.h"
+#include "../include/uapi/drm_local/amdxdna_accel.h"
 #include <string>
 #include <atomic>
 
@@ -97,7 +97,7 @@ public:
   bo(const device& device, uint32_t ctx_id, size_t size, uint64_t flags);
   bo(const device& device, xrt_core::shared_handle::export_handle ehdl);
 
-  ~bo();
+  virtual ~bo();
 
   void*
   map(map_type);

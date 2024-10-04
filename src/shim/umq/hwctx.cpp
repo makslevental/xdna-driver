@@ -3,8 +3,8 @@
 
 #include "hwctx.h"
 #include "hwq.h"
+#include "bo.h"
 
-#include "core/common/config_reader.h"
 #include "core/common/memalign.h"
 
 namespace shim_xdna {
@@ -25,7 +25,7 @@ hw_ctx_umq::
   shim_debug("Destroying UMQ HW context (%d)...", get_slotidx());
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 hw_ctx_umq::
 alloc_bo(void* userptr, size_t size, uint64_t flags)
 {

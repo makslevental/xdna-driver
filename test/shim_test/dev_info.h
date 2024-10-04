@@ -4,7 +4,7 @@
 #ifndef _SHIMTEST_DEV_INFO_H_
 #define _SHIMTEST_DEV_INFO_H_
 
-#include "core/common/device.h"
+#include "../../src/shim/device.h"
 #include "core/common/query_requests.h"
 
 using namespace xrt_core;
@@ -28,10 +28,10 @@ const uint16_t npu4_revision_id = 0x10;
 const uint16_t npu5_revision_id = 0x11;
 const uint16_t npu6_revision_id = 0x20;
 
-const xclbin_info& get_xclbin_info(device* dev, const char *xclbin_name=nullptr);
-std::string get_xclbin_name(device* dev);
-std::string get_xclbin_workspace(device* dev, const char *xclbin_name=nullptr);
-std::string get_xclbin_path(device* dev, const char *xclbin_name=nullptr);
-const std::map<const char*, cuidx_type>& get_xclbin_ip_name2index(device* dev, const char *xclbin_name=nullptr);
+const xclbin_info& get_xclbin_info(shim_xdna::device* dev, const char *xclbin_name=nullptr);
+std::string get_xclbin_name(shim_xdna::device* dev);
+std::string get_xclbin_workspace(shim_xdna::device* dev, const char *xclbin_name=nullptr);
+std::string get_xclbin_path(shim_xdna::device* dev, const char *xclbin_name=nullptr);
+const std::map<const char*, cuidx_type>& get_xclbin_ip_name2index(shim_xdna::device* dev, const char *xclbin_name=nullptr);
 
 #endif // _SHIMTEST_DEV_INFO_H_

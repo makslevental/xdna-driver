@@ -9,9 +9,8 @@
 #include "exec_buf.h"
 #include "io_config.h"
 
-#include "core/common/shim/fence_handle.h"
-#include "core/common/system.h"
 #include "../../src/shim/shim.h"
+#include "../../src/shim/hwq.h"
 #include <algorithm>
 
 namespace {
@@ -149,7 +148,7 @@ private:
 }
 
 void
-TEST_cmd_fence_host(device::id_type id, std::shared_ptr<device> sdev, arg_type& arg)
+TEST_cmd_fence_host(device::id_type id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   // Can't fork with opened device.
   sdev.reset();
@@ -159,7 +158,7 @@ TEST_cmd_fence_host(device::id_type id, std::shared_ptr<device> sdev, arg_type& 
 }
 
 void
-TEST_cmd_fence_device(device::id_type id, std::shared_ptr<device> sdev, arg_type& arg)
+TEST_cmd_fence_device(device::id_type id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   // Can't fork with opened device.
   sdev.reset();

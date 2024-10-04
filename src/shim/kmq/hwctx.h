@@ -14,11 +14,11 @@ public:
 
   ~hw_ctx_kmq();
 
-  std::unique_ptr<xrt_core::buffer_handle>
+  std::unique_ptr<bo>
   alloc_bo(void* userptr, size_t size, uint64_t flags) override;
 
 private:
-  std::vector< std::unique_ptr<xrt_core::buffer_handle> > m_pdi_bos;
+  std::vector< std::unique_ptr<bo> > m_pdi_bos;
 };
 
 } // shim_xdna

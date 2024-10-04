@@ -5,31 +5,30 @@
 #define _SHIMTEST_HWCTX_H_
 
 #include "dev_info.h"
+#include "../../src/shim/hwctx.h"
 
-#include "core/common/shim/hwctx_handle.h"
-#include "core/common/device.h"
 
 using namespace xrt_core;
 
 class hw_ctx {
 public:
-  hw_ctx(device* dev, const char *xclbin_name=nullptr)
+  hw_ctx(shim_xdna::device* dev, const char *xclbin_name=nullptr)
   {
     auto path = get_xclbin_path(dev, xclbin_name);
     hw_ctx_init(dev, path);
   }
 
-  hwctx_handle *
+  shim_xdna::hw_ctx *
   get()
   {
     return m_handle.get();
   }
 
 private:
-  std::unique_ptr<hwctx_handle> m_handle;
+  std::unique_ptr<shim_xdna::hw_ctx> m_handle;
 
   void
-  hw_ctx_init(device* dev, const std::string& xclbin_path)
+  hw_ctx_init(shim_xdna::device* dev, const std::string& xclbin_path)
   {
     xrt::xclbin xclbin;
 

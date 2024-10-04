@@ -141,7 +141,7 @@ public:
     auto mod = xrt::module{elf};
     size_t instr_size = bo_ctrl.size();
     xrt_core::module_int::patch(mod, reinterpret_cast<uint8_t*>(bo_ctrl.map()), &instr_size, &m_patching_args);
-    bo_ctrl.get()->sync(buffer_handle::direction::host2device, instr_size, 0);
+    bo_ctrl.get()->sync(shim_xdna::bo::direction::host2device, instr_size, 0);
   }
 
 private:

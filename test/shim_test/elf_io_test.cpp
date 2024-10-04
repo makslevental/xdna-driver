@@ -6,8 +6,8 @@
 #include "hwctx.h"
 #include "dev_info.h"
 #include "exec_buf.h"
+#include "../../src/shim/hwq.h"
 
-#include "core/common/device.h"
 #include <fstream>
 
 namespace {
@@ -33,12 +33,12 @@ read_from_bin(const std::string& filename, char *buf, size_t size)
 }
 
 bo
-create_bo_from_bin(device* dev, const std::string& filename)
+create_bo_from_bin(shim_xdna::device* dev, const std::string& filename)
 {
   size_t sz = get_bin_size(filename);
   bo ret_bo{dev, sz};
   read_from_bin(filename, reinterpret_cast<char*>(ret_bo.map()), sz);
-  ret_bo.get()->sync(buffer_handle::direction::host2device, sz, 0);
+  ret_bo.get()->sync(shim_xdna::bo::direction::host2device, sz, 0);
   std::cout << "Created BO from " << filename << std::endl;
   return ret_bo;
 }
@@ -86,7 +86,7 @@ prepare_cmd_npu2(bo& execbuf, const std::string& elf, bo& ctrl, bo& ifm, bo& wts
 void
 check_result(bo& bo_ofm, bo& bo_ofm_golden)
 {
-  bo_ofm.get()->sync(buffer_handle::direction::device2host, bo_ofm.size(), 0);
+  bo_ofm.get()->sync(shim_xdna::bo::direction::device2host, bo_ofm.size(), 0);
 
   auto ofm_p = reinterpret_cast<uint8_t*>(bo_ofm.map());
   auto ofm_golden_p = reinterpret_cast<uint8_t*>(bo_ofm_golden.map());
@@ -102,7 +102,7 @@ check_result(bo& bo_ofm, bo& bo_ofm_golden)
 } // namespace
 
 void
-TEST_txn_elf_flow(device::id_type id, std::shared_ptr<device> sdev, const std::vector<uint64_t>& arg)
+TEST_txn_elf_flow(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
 {
   const char* xclbin_nm = "design.xclbin";
 

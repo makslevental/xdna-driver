@@ -5,6 +5,7 @@
 #include "hwctx.h"
 #include "exec_buf.h"
 #include "io_config.h"
+#include "../../src/shim/hwq.h"
 
 #include <string>
 #include <regex>
@@ -25,7 +26,7 @@ const char *io_test_bo_type_names[] = {
 };
 
 std::string
-find_first_match_ip_name(device* dev, const std::string& pattern)
+find_first_match_ip_name(shim_xdna::device* dev, const std::string& pattern)
 {
   for (auto& ip : get_xclbin_ip_name2index(dev)) {
     const std::string& name = ip.first;
@@ -110,7 +111,7 @@ init_args()
 }
 
 io_test_bo_set::
-io_test_bo_set(device* dev, const std::string& local_data_path) :
+io_test_bo_set(shim_xdna::device* dev, const std::string& local_data_path) :
   m_bo_array{}
   , m_local_data_path(local_data_path)
   , m_dev(dev)
@@ -131,7 +132,7 @@ sync_before_run()
     case IO_TEST_BO_INSTRUCTION:
     case IO_TEST_BO_PARAMETERS:
     case IO_TEST_BO_MC_CODE:
-      ibo->tbo->get()->sync(buffer_handle::direction::host2device, ibo->tbo->size(), 0);
+      ibo->tbo->get()->sync(shim_xdna::bo::direction::host2device, ibo->tbo->size(), 0);
       break;
     default:
       break;
@@ -148,7 +149,7 @@ sync_after_run()
     switch(i) {
     case IO_TEST_BO_OUTPUT:
     case IO_TEST_BO_INTERMEDIATE:
-      ibo->tbo->get()->sync(buffer_handle::direction::device2host, ibo->tbo->size(), 0);
+      ibo->tbo->get()->sync(shim_xdna::bo::direction::device2host, ibo->tbo->size(), 0);
       break;
     default:
       break;

@@ -186,7 +186,7 @@ xclbin_info xclbin_infos[] = {
 }
 
 const xclbin_info&
-get_xclbin_info(device* dev, const char *xclbin_name)
+get_xclbin_info(shim_xdna::device* dev, const char *xclbin_name)
 {
   //  auto pci_dev_id = device_query<query::pcie_device>(dev);
   uint16_t pci_dev_id = 5378;
@@ -202,19 +202,19 @@ get_xclbin_info(device* dev, const char *xclbin_name)
 }
 
 std::string
-get_xclbin_name(device* dev)
+get_xclbin_name(shim_xdna::device* dev)
 {
   return get_xclbin_info(dev).name;
 }
 
 std::string
-get_xclbin_workspace(device* dev, const char *xclbin_name)
+get_xclbin_workspace(shim_xdna::device* dev, const char *xclbin_name)
 {
   return ("/home/mlevental/dev_projects/my-xdna-driver/" + get_xclbin_info(dev, xclbin_name).workspace);
 }
 
 std::string
-get_xclbin_path(device* dev, const char *xclbin_name)
+get_xclbin_path(shim_xdna::device* dev, const char *xclbin_name)
 {
   if (!xclbin_path.empty())
     return xclbin_path;
@@ -226,7 +226,7 @@ get_xclbin_path(device* dev, const char *xclbin_name)
 }
 
 const std::map<const char*, cuidx_type>&
-get_xclbin_ip_name2index(device* dev, const char *xclbin_name)
+get_xclbin_ip_name2index(shim_xdna::device* dev, const char *xclbin_name)
 {
   return get_xclbin_info(dev, xclbin_name).ip_name2idx;
 }

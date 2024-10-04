@@ -6,7 +6,6 @@
 
 #include "bo.h"
 
-#include "core/common/device.h"
 #include <memory>
 
 enum io_test_bo_type {
@@ -28,7 +27,7 @@ struct io_test_bo {
 
 class io_test_bo_set {
 public:
-  io_test_bo_set(device *dev, const std::string& data_path);
+  io_test_bo_set(shim_xdna::device *dev, const std::string& data_path);
 
   void
   run();
@@ -64,7 +63,7 @@ public:
 private:
   std::array<io_test_bo, IO_TEST_BO_MAX_TYPES> m_bo_array;
   const std::string m_local_data_path;
-  device *m_dev;
+  shim_xdna::device *m_dev;
 
   void
   init_sizes();

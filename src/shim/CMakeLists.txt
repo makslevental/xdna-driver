@@ -53,6 +53,7 @@ target_include_directories(${XDNA_TARGET} PRIVATE
 # at that time, so need to be fully solved here.
 target_link_libraries(${XDNA_TARGET} PRIVATE
   xrt_core
+  core_pcielinux_objects
   ${XRT_CORE_TARGET}
   ${XRT_COREUTIL_TARGET}
   )

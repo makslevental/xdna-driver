@@ -15,16 +15,16 @@ public:
 
   ~device_kmq();
 
-  std::unique_ptr<xrt_core::buffer_handle>
-  alloc_bo(void* userptr, xrt_core::hwctx_handle::slot_id ctx_id,
+  std::unique_ptr<bo>
+  alloc_bo(void* userptr, hw_ctx::slot_id ctx_id,
     size_t size, uint64_t flags) override;
 
 protected:
-  std::unique_ptr<xrt_core::hwctx_handle>
+  std::unique_ptr<hw_ctx>
   create_hw_context(const device& dev, const xrt::xclbin& xclbin,
     const xrt::hw_context::qos_type& qos) const override;
 
-  std::unique_ptr<xrt_core::buffer_handle>
+  std::unique_ptr<bo>
   import_bo(xrt_core::shared_handle::export_handle ehdl) const override;
 };
 

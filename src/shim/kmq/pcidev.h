@@ -20,7 +20,7 @@ public:
 
 private:
   // Create on first device creation and removed right before device is closed
-  mutable std::unique_ptr<xrt_core::buffer_handle> m_dev_heap_bo;
+  mutable std::unique_ptr<bo> m_dev_heap_bo;
 
   virtual void
   on_last_close() const override;

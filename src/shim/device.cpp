@@ -804,7 +804,7 @@ lookup_query(query::key_type query_key) const
 
 device::
 device(const pdev& pdev, handle_type shim_handle, id_type device_id)
-  : noshim<xrt_core::device_pcie>{shim_handle, device_id, !pdev.m_is_mgmt}
+  : m_handle(shim_handle), m_device_id(device_id), m_userpf(!pdev.m_is_mgmt)
   , m_pdev(pdev)
 {
   m_pdev.open();
@@ -822,6 +822,13 @@ device::
 get_pdev() const
 {
   return m_pdev;
+}
+
+xclDeviceHandle
+device::
+get_device_handle() const
+{
+  return m_handle;
 }
 
 void
@@ -845,7 +852,30 @@ register_xclbin(const xrt::xclbin& xclbin) const
   // loaded by create_hw_context
 }
 
-std::unique_ptr<xrt_core::hwctx_handle>
+
+device::id_type
+device::get_device_id() const {
+    return 0;
+}
+
+xrt::xclbin
+device::
+get_xclbin(const xrt::uuid& xclbin_id) const
+{
+  // Allow access to xclbin in process of loading via device::load_xclbin
+  if (xclbin_id && xclbin_id == m_xclbin.get_uuid())
+    return m_xclbin;
+  //  if (xclbin_id) {
+  //    std::lock_guard lk(m_mutex);
+  //    return m_xclbins.get(xclbin_id);
+  //  }
+  throw std::runtime_error("TODO(max):multi-xclbin");
+
+  // Single xclbin case
+  return m_xclbin;
+}
+
+std::unique_ptr<hw_ctx>
 device::
 create_hw_context(const xrt::uuid& xclbin_uuid, const xrt::hw_context::qos_type& qos,
   xrt::hw_context::access_mode mode) const
@@ -853,21 +883,21 @@ create_hw_context(const xrt::uuid& xclbin_uuid, const xrt::hw_context::qos_type&
   return create_hw_context(*this, get_xclbin(xclbin_uuid), qos);
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 device::
 alloc_bo(size_t size, uint64_t flags)
 {
   return alloc_bo(nullptr, size, flags);
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 device::
 alloc_bo(void* userptr, size_t size, uint64_t flags)
 {
   return alloc_bo(userptr, AMDXDNA_INVALID_CTX_HANDLE, size, flags);
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 device::
 import_bo(pid_t pid, xrt_core::shared_handle::export_handle ehdl)
 {
@@ -886,6 +916,53 @@ device::
 import_fence(pid_t pid, xrt_core::shared_handle::export_handle ehdl)
 {
   return std::make_unique<fence>(*this, import_fd(pid, ehdl));
+}
+
+void
+device::load_axlf(const axlf* buffer)
+{
+  if (auto ret = xclLoadXclBin(get_device_handle(), buffer))
+    throw xrt_core::system_error(ret, "failed to load xclbin");
+}
+
+void
+device::
+load_xclbin(const xrt::xclbin& xclbin)
+{
+  try {
+    m_xclbin = xclbin;
+    load_axlf(xclbin.get_axlf());
+  }
+  catch (const std::exception&) {
+    m_xclbin = {};
+    throw;
+  }
+}
+
+void
+device::
+record_xclbin(const xrt::xclbin& xclbin)
+{
+  try {
+    register_xclbin(xclbin); // shim level registration
+  }
+  catch (const xrt_core::ishim::not_supported_error&) {
+    // Shim does not support register xclbin, meaning it
+    // doesn't support multi-xclbin, so just take the
+    // load_xclbin flow.
+    load_xclbin(xclbin);
+    return;
+  }
+
+  std::lock_guard lk(m_mutex);
+  m_xclbins.insert(xclbin);
+
+  // For single xclbin case, where shim doesn't implement
+  // kds_cu_info, we need the current xclbin stored here
+  // as a temporary 'global'.  This variable is used when
+  // update_cu_info() is called and query:kds_cu_info is not
+  // implemented
+  m_xclbin = xclbin;
 }
 
 } // namespace shim_xdna

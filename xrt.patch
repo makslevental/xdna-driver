@@ -74,6 +74,19 @@ index 46a28036c..8bcc0b939 100644
  }
  
  namespace environment {
+diff --git a/src/runtime_src/core/common/sysinfo.cpp b/src/runtime_src/core/common/sysinfo.cpp
+index 15c8c4c4c..b5ee6b5fa 100644
+--- a/src/runtime_src/core/common/sysinfo.cpp
++++ b/src/runtime_src/core/common/sysinfo.cpp
+@@ -18,7 +18,7 @@ get_xrt_info(boost::property_tree::ptree& pt)
+   pt.put("branch",     xrt_build_version_branch);
+   pt.put("hash",       xrt_build_version_hash);
+   pt.put("build_date", xrt_build_version_date);
+-  xrt_core::get_driver_info(pt);
++//  xrt_core::get_driver_info(pt);
+ }
+ 
+ void
 diff --git a/src/runtime_src/core/common/system.cpp b/src/runtime_src/core/common/system.cpp
 index 708f92c48..8cd037402 100644
 --- a/src/runtime_src/core/common/system.cpp
@@ -139,7 +152,7 @@ index 708f92c48..8cd037402 100644
    if (auto device = get_userpf_device(handle)) {
      if (device->get_device_id() != id)
 diff --git a/src/runtime_src/core/pcie/linux/system_linux.cpp b/src/runtime_src/core/pcie/linux/system_linux.cpp
-index 81e301139..405e09f43 100644
+index 81e301139..90025d57f 100644
 --- a/src/runtime_src/core/pcie/linux/system_linux.cpp
 +++ b/src/runtime_src/core/pcie/linux/system_linux.cpp
 @@ -26,7 +26,7 @@
@@ -151,19 +164,28 @@ index 81e301139..405e09f43 100644
  
  namespace driver_list {
  
-@@ -57,6 +57,12 @@ singleton_system_linux()
+@@ -57,11 +57,17 @@ singleton_system_linux()
    return &singleton;
  }
  
+-// Dynamic linking automatically constructs the singleton
+-struct X
 +xrt_core::system_linux*
 +get_singleton_system_linux()
-+{
+ {
+-  X() { singleton_system_linux(); }
+-} x;
 +  return singleton_system_linux();
 +}
 +
- // Dynamic linking automatically constructs the singleton
- struct X
- {
++// Dynamic linking automatically constructs the singleton
++//struct X
++//{
++//  X() { singleton_system_linux(); }
++//} x;
+ 
+ static boost::property_tree::ptree
+ driver_version(const std::string& driver)
 @@ -88,14 +94,13 @@ driver_version(const std::string& driver)
    return _pt;
  }

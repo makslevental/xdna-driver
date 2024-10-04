@@ -20,14 +20,14 @@ device_umq::
   shim_debug("Destroying UMQ device (%s) ...", get_pdev().m_sysfs_name.c_str());
 }
 
-std::unique_ptr<xrt_core::hwctx_handle>
+std::unique_ptr<hw_ctx>
 device_umq::
 create_hw_context(const device& dev, const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos) const
 {
   return std::make_unique<hw_ctx_umq>(dev, xclbin, qos);
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 device_umq::
 alloc_bo(void* userptr, xrt_core::hwctx_handle::slot_id ctx_id,
   size_t size, uint64_t flags)
@@ -38,7 +38,7 @@ alloc_bo(void* userptr, xrt_core::hwctx_handle::slot_id ctx_id,
   return std::make_unique<bo_umq>(*this, ctx_id, size, flags);
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 device_umq::
 import_bo(xrt_core::shared_handle::export_handle ehdl) const
 {

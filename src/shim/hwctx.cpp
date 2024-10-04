@@ -82,14 +82,14 @@ close_cu_context(xrt_core::cuidx_type cuidx)
   // Nothing to be done
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 hw_ctx::
 alloc_bo(size_t size, uint64_t flags)
 {
   return alloc_bo(nullptr, size, flags);
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 hw_ctx::
 import_bo(pid_t pid, xrt_core::shared_handle::export_handle ehdl)
 {
@@ -98,7 +98,7 @@ import_bo(pid_t pid, xrt_core::shared_handle::export_handle ehdl)
   return dev.import_bo(pid, ehdl);
 }
 
-xrt_core::hwqueue_handle*
+hw_q*
 hw_ctx::
 get_hw_queue()
 {
@@ -195,7 +195,9 @@ create_ctx_on_device()
   arg.qos_p = reinterpret_cast<uintptr_t>(&m_qos);
   arg.umq_bo = m_q->get_queue_bo();
   arg.max_opc = m_ops_per_cycle;
-  arg.num_tiles = m_num_cols * xrt_core::device_query<xrt_core::query::aie_tiles_stats>(&m_device).core_rows;
+//  throw std::runtime_error("TODO(max): core_rows");
+  //  arg.num_tiles = m_num_cols * xrt_core::device_query<xrt_core::query::aie_tiles_stats>(&m_device).core_rows;
+  arg.num_tiles = m_num_cols * 4;
   arg.log_buf_bo = m_log_bo ?
     static_cast<bo*>(m_log_bo.get())->get_drm_bo_handle() :
     AMDXDNA_INVALID_BO_HANDLE;

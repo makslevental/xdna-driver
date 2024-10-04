@@ -14,7 +14,7 @@ public:
 
   ~hw_ctx_umq();
 
-  std::unique_ptr<xrt_core::buffer_handle>
+  std::unique_ptr<bo>
   alloc_bo(void* userptr, size_t size, uint64_t flags) override;
 
 };

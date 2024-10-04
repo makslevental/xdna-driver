@@ -4,15 +4,13 @@
 #ifndef _SHIMTEST_2PROC_H_
 #define _SHIMTEST_2PROC_H_
 
-#include "core/common/device.h"
-
 #include <cstdarg>
-#include <signal.h>
+#include <csignal>
 #include <sys/wait.h>
 
 class test_2proc {
 public:
-  test_2proc(xrt_core::device::id_type id) : m_id(id)
+  test_2proc(shim_xdna::device::id_type id) : m_id(id)
   {
     int p_pipefd[2] = {-1, -1};
     int c_pipefd[2] = {-1, -1};
@@ -102,7 +100,7 @@ protected:
     return true;
   }
 
-  xrt_core::device::id_type
+  shim_xdna::device::id_type
   get_dev_id()
   {
     return m_id;
@@ -141,7 +139,7 @@ private:
   bool m_child_failed = true;
   int m_read_fd = -1;
   int m_write_fd = -1;
-  xrt_core::device::id_type m_id;
+  shim_xdna::device::id_type m_id;
 };
 
 #endif // _SHIMTEST_2PROC_H_

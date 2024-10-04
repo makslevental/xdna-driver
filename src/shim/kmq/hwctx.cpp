@@ -45,11 +45,11 @@ hw_ctx_kmq(const device& device, const xrt::xclbin& xclbin, const xrt::hw_contex
     m_pdi_bos.push_back(alloc_bo(nullptr, ci.m_pdi.size(), f.all));
     auto& pdi_bo = m_pdi_bos[i];
     auto pdi_vaddr = reinterpret_cast<char *>(
-      pdi_bo->map(xrt_core::buffer_handle::map_type::write));
+      pdi_bo->map(bo::map_type::write));
 
     auto& cf = cu_conf_param->cu_configs[i];
     std::memcpy(pdi_vaddr, ci.m_pdi.data(), ci.m_pdi.size());
-    pdi_bo->sync(xrt_core::buffer_handle::direction::host2device, pdi_bo->get_properties().size, 0);
+    pdi_bo->sync(bo::direction::host2device, pdi_bo->get_properties().size, 0);
     cf.cu_bo = static_cast<bo*>(pdi_bo.get())->get_drm_bo_handle();
     cf.cu_func = ci.m_func;
   }
@@ -72,7 +72,7 @@ hw_ctx_kmq::
   shim_debug("Destroying KMQ HW context (%d)...", get_slotidx());
 }
 
-std::unique_ptr<xrt_core::buffer_handle>
+std::unique_ptr<bo>
 hw_ctx_kmq::
 alloc_bo(void* userptr, size_t size, uint64_t flags)
 {
