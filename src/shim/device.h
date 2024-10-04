@@ -5,6 +5,7 @@
 #define PCIE_DEVICE_LINUX_XDNA_H
 
 #include "shim_debug.h"
+#include "fence.h"
 #include "core/pcie/linux/device_linux.h"
 #include "core/common/ishim.h"
 
@@ -111,7 +112,7 @@ public:
     const xrt::xclbin& xclbin, const xrt::hw_context::qos_type& qos) const = 0;
 
   virtual std::unique_ptr<bo>
-  import_bo(xrt_core::shared_handle::export_handle ehdl) const = 0;
+  import_bo(shim_xdna::shared_handle::export_handle ehdl) const = 0;
 
   device(const pdev& pdev, handle_type shim_handle, id_type device_id);
 
@@ -135,7 +136,7 @@ public:
   alloc_bo(void* userptr, size_t size, uint64_t flags);
 
   std::unique_ptr<bo>
-  import_bo(pid_t, xrt_core::shared_handle::export_handle);
+  import_bo(pid_t, shim_xdna::shared_handle::export_handle);
 
   std::unique_ptr<hw_ctx>
   create_hw_context(const xrt::uuid& xclbin_uuid, const xrt::hw_context::qos_type& qos,
@@ -166,11 +167,11 @@ public:
   bool
   write_aie_reg(uint16_t col, uint16_t row, uint32_t reg_addr, uint32_t reg_val);
 
-  std::unique_ptr<xrt_core::fence_handle>
-  create_fence(xrt::fence::access_mode);
+  std::unique_ptr<shim_xdna::fence_handle>
+  create_fence(shim_xdna::fence_handle::access_mode);
 
-  std::unique_ptr<xrt_core::fence_handle>
-  import_fence(pid_t, xrt_core::shared_handle::export_handle);
+  std::unique_ptr<shim_xdna::fence_handle>
+  import_fence(pid_t, shim_xdna::shared_handle::export_handle);
 
   void
   load_axlf(const axlf* buffer);

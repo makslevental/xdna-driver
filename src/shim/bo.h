@@ -95,7 +95,7 @@ public:
   bo(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
     size_t size, uint64_t flags, amdxdna_bo_type type);
   bo(const device& device, uint32_t ctx_id, size_t size, uint64_t flags);
-  bo(const device& device, xrt_core::shared_handle::export_handle ehdl);
+  bo(const device& device, shim_xdna::shared_handle::export_handle ehdl);
 
   virtual ~bo();
 
@@ -111,7 +111,7 @@ public:
   properties
   get_properties() const;
 
-  std::unique_ptr<xrt_core::shared_handle>
+  std::unique_ptr<shim_xdna::shared_handle>
   share() const;
 
   // For cmd BO only
@@ -185,7 +185,7 @@ public:
   uint64_t m_flags = 0;
   amdxdna_bo_type m_type = AMDXDNA_BO_INVALID;
   std::unique_ptr<drm_bo> m_bo;
-  const shared m_import;
+  const shared_handle m_import;
 
   // Command ID in the queue after command submission.
   // Only valid for cmd BO.

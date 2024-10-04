@@ -91,7 +91,7 @@ alloc_bo(size_t size, uint64_t flags)
 
 std::unique_ptr<bo>
 hw_ctx::
-import_bo(pid_t pid, xrt_core::shared_handle::export_handle ehdl)
+import_bo(pid_t pid, shim_xdna::shared_handle::export_handle ehdl)
 {
   // const_cast: import_bo() is not const yet in device class
   auto& dev = const_cast<device&>(get_device());

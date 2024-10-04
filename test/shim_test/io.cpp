@@ -211,8 +211,8 @@ bo_type2name(int type)
 
 void
 io_test_bo_set::
-run(const std::vector<xrt_core::fence_handle*>& wait_fences,
-  const std::vector<xrt_core::fence_handle*>& signal_fences, bool no_check_result)
+run(const std::vector<shim_xdna::fence_handle*>& wait_fences,
+  const std::vector<shim_xdna::fence_handle*>& signal_fences, bool no_check_result)
 {
   hw_ctx hwctx{m_dev};
   auto hwq = hwctx.get()->get_hw_queue();
@@ -246,8 +246,8 @@ void
 io_test_bo_set::
 run()
 {
-  const std::vector<xrt_core::fence_handle*> sfences{};
-  const std::vector<xrt_core::fence_handle*> wfences{};
+  const std::vector<shim_xdna::fence_handle*> sfences{};
+  const std::vector<shim_xdna::fence_handle*> wfences{};
   run(wfences, sfences, false);
 }
 
@@ -255,8 +255,8 @@ void
 io_test_bo_set::
 run(bool no_check_result)
 {
-  const std::vector<xrt_core::fence_handle*> sfences{};
-  const std::vector<xrt_core::fence_handle*> wfences{};
+  const std::vector<shim_xdna::fence_handle*> sfences{};
+  const std::vector<shim_xdna::fence_handle*> wfences{};
   run(wfences, sfences, no_check_result);
 }
 

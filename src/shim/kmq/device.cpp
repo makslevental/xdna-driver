@@ -41,7 +41,7 @@ alloc_bo(void* userptr, hw_ctx::slot_id ctx_id,
 
 std::unique_ptr<bo>
 device_kmq::
-import_bo(xrt_core::shared_handle::export_handle ehdl) const
+import_bo(shim_xdna::shared_handle::export_handle ehdl) const
 {
   return std::make_unique<bo_kmq>(*this, ehdl);
 }

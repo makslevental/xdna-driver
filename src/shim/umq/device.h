@@ -24,7 +24,7 @@ protected:
     const xrt::hw_context::qos_type& qos) const override;
 
   std::unique_ptr<bo>
-  import_bo(xrt_core::shared_handle::export_handle ehdl) const override;
+  import_bo(shim_xdna::shared_handle::export_handle ehdl) const override;
 };
 
 } // namespace shim_xdna

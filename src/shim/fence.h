@@ -4,8 +4,6 @@
 #ifndef _FENCE_XDNA_H_
 #define _FENCE_XDNA_H_
 
-#include "hwctx.h"
-#include "device.h"
 #include "shared.h"
 
 #include "shim_debug.h"
@@ -13,44 +11,47 @@
 #include <mutex>
 
 namespace shim_xdna {
-
-class fence : public xrt_core::fence_handle
+class pdev;
+class device;
+class hw_ctx;
+class fence_handle
 {
 public:
-  fence(const device& device);
+  using export_handle = int;
+  enum class access_mode : uint8_t { local, shared, process, hybrid };
 
-  fence(const device& device, xrt_core::shared_handle::export_handle ehdl);
+  fence_handle(const device& device);
 
-  fence(const fence&);
+  fence_handle(const device& device, shim_xdna::shared_handle::export_handle ehdl);
 
-  ~fence() override;
+  fence_handle(const fence_handle&);
 
-  std::unique_ptr<xrt_core::fence_handle>
-  clone() const override;
+  ~fence_handle();
 
-  std::unique_ptr<xrt_core::shared_handle>
-  share() const override;
+  std::unique_ptr<shim_xdna::fence_handle>
+  clone() const;
+
+  std::unique_ptr<shim_xdna::shared_handle>
+  share_handle() const;
 
   void
-  wait(uint32_t timeout_ms) const override;
+  wait(uint32_t timeout_ms) const;
 
   uint64_t
-  get_next_state() const override;
+  get_next_state() const;
 
   void
-  signal() const override;
+  signal() const;
 
-public:
   void
   submit_wait(const hw_ctx*) const;
 
   static void
-  submit_wait(const pdev& dev, const hw_ctx*, const std::vector<xrt_core::fence_handle*>& fences);
+  submit_wait(const pdev& dev, const hw_ctx*, const std::vector<shim_xdna::fence_handle*>& fences);
 
   void
   submit_signal(const hw_ctx*) const;
 
-private:
   uint64_t
   wait_next_state() const;
 
@@ -58,7 +59,7 @@ private:
   signal_next_state() const;
 
   const pdev& m_pdev;
-  const std::unique_ptr<xrt_core::shared_handle> m_import;
+  const std::unique_ptr<shim_xdna::shared_handle> m_import;
   uint32_t m_syncobj_hdl;
 
   // Protecting below mutables

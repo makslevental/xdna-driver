@@ -121,7 +121,7 @@ bo_kmq(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
 }
 
 bo_kmq::
-bo_kmq(const device& device, xrt_core::shared_handle::export_handle ehdl)
+bo_kmq(const device& device, shim_xdna::shared_handle::export_handle ehdl)
   : bo(device, ehdl)
 {
   import_bo();

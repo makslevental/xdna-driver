@@ -92,10 +92,10 @@ export_drm_bo(const shim_xdna::pdev& dev, uint32_t boh)
 }
 
 uint32_t
-import_drm_bo(const shim_xdna::pdev& dev, const shim_xdna::shared& share,
+import_drm_bo(const shim_xdna::pdev& dev, const shim_xdna::shared_handle& share,
   amdxdna_bo_type *type, size_t *size)
 {
-  xrt_core::shared_handle::export_handle fd = share.get_export_handle();
+  shim_xdna::shared_handle::export_handle fd = share.get_export_handle();
   drm_prime_handle imp_bo = {AMDXDNA_INVALID_BO_HANDLE, 0, fd};
   dev.ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &imp_bo);
 
@@ -287,7 +287,7 @@ bo(const device& device, xrt_core::hwctx_handle::slot_id ctx_id,
 }
 
 bo::
-bo(const device& device, xrt_core::shared_handle::export_handle ehdl)
+bo(const device& device, shim_xdna::shared_handle::export_handle ehdl)
   : m_pdev(device.get_pdev())
   , m_import(ehdl)
 {
@@ -374,14 +374,14 @@ detach_from_ctx()
   detach_dbg_drm_bo(m_pdev, boh, m_owner_ctx_id);
 }
 
-std::unique_ptr<xrt_core::shared_handle>
+std::unique_ptr<shim_xdna::shared_handle>
 bo::
 share() const
 {
   auto boh = get_drm_bo_handle();
   auto fd = export_drm_bo(m_pdev, boh);
   shim_debug("Exported bo %d to fd %d", boh, fd);
-  return std::make_unique<shared>(fd);
+  return std::make_unique<shared_handle>(fd);
 }
 
 amdxdna_bo_type

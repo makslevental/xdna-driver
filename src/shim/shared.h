@@ -4,25 +4,24 @@
 #ifndef _SHARED_XDNA_H_
 #define _SHARED_XDNA_H_
 
-#include "core/common/shim/shared_handle.h"
 #include <unistd.h>
 
 namespace shim_xdna {
 
-class shared : public xrt_core::shared_handle
+class shared_handle
 {
 public:
-  shared(int fd) : m_fd(fd)
+  shared_handle(int fd) : m_fd(fd)
   {}
 
-  ~shared() override
+  ~shared_handle()
   {
     if (m_fd != -1)
       close(m_fd);
   }
-
+  using export_handle = int;
   export_handle
-  get_export_handle() const override
+  get_export_handle() const
   { return m_fd; }
 
 private:

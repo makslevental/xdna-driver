@@ -899,23 +899,23 @@ alloc_bo(void* userptr, size_t size, uint64_t flags)
 
 std::unique_ptr<bo>
 device::
-import_bo(pid_t pid, xrt_core::shared_handle::export_handle ehdl)
+import_bo(pid_t pid, shim_xdna::shared_handle::export_handle ehdl)
 {
   return import_bo(import_fd(pid, ehdl));
 }
 
-std::unique_ptr<xrt_core::fence_handle>
+std::unique_ptr<shim_xdna::fence_handle>
 device::
-create_fence(xrt::fence::access_mode)
+create_fence(fence_handle::access_mode)
 {
-  return std::make_unique<fence>(*this);
+  return std::make_unique<fence_handle>(*this);
 }
 
-std::unique_ptr<xrt_core::fence_handle>
+std::unique_ptr<shim_xdna::fence_handle>
 device::
-import_fence(pid_t pid, xrt_core::shared_handle::export_handle ehdl)
+import_fence(pid_t pid, shim_xdna::shared_handle::export_handle ehdl)
 {
-  return std::make_unique<fence>(*this, import_fd(pid, ehdl));
+  return std::make_unique<fence_handle>(*this, import_fd(pid, ehdl));
 }
 
 void

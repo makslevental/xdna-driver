@@ -110,24 +110,24 @@ wait_command(shim_xdna::bo *cmd, uint32_t timeout_ms) const
 
 void
 hw_q::
-submit_wait(const xrt_core::fence_handle* f)
+submit_wait(const shim_xdna::fence_handle* f)
 {
-  auto fh = static_cast<const fence*>(f);
+  auto fh = static_cast<const fence_handle*>(f);
   fh->submit_wait(m_hwctx);
 }
 
 void
 hw_q::
-submit_wait(const std::vector<xrt_core::fence_handle*>& fences)
+submit_wait(const std::vector<shim_xdna::fence_handle*>& fences)
 {
-  fence::submit_wait(m_pdev, m_hwctx, fences);
+  fence_handle::submit_wait(m_pdev, m_hwctx, fences);
 }
 
 void
 hw_q::
-submit_signal(const xrt_core::fence_handle* f)
+submit_signal(const shim_xdna::fence_handle* f)
 {
-  auto fh = static_cast<const fence*>(f);
+  auto fh = static_cast<const fence_handle*>(f);
   fh->submit_signal(m_hwctx);
 }
 

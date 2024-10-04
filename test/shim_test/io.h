@@ -36,8 +36,8 @@ public:
   run(bool no_check_result);
 
   void
-  run(const std::vector<xrt_core::fence_handle*>& wait_fences,
-    const std::vector<xrt_core::fence_handle*>& signal_fences, bool no_check_result);
+  run(const std::vector<shim_xdna::fence_handle*>& wait_fences,
+    const std::vector<shim_xdna::fence_handle*>& signal_fences, bool no_check_result);
 
   void
   sync_before_run();

@@ -4,8 +4,8 @@
 #ifndef _HWQ_XDNA_H_
 #define _HWQ_XDNA_H_
 
-#include "fence.h"
 #include "hwctx.h"
+#include "fence.h"
 #include "shim_debug.h"
 
 #include "core/common/shim/hwqueue_handle.h"
@@ -29,16 +29,16 @@ public:
   wait_command(bo *, uint32_t timeout_ms) const;
 
   void
-  submit_wait(const xrt_core::fence_handle*);
+  submit_wait(const shim_xdna::fence_handle*);
 
   void
-  submit_wait(const std::vector<xrt_core::fence_handle*>&);
+  submit_wait(const std::vector<shim_xdna::fence_handle*>&);
 
   void
-  submit_signal(const xrt_core::fence_handle*);
+  submit_signal(const shim_xdna::fence_handle*);
 
-  std::unique_ptr<xrt_core::fence_handle>
-  import(xrt_core::fence_handle::export_handle)
+  std::unique_ptr<shim_xdna::fence_handle>
+  import(shim_xdna::fence_handle::export_handle)
   { shim_not_supported_err(__func__); }
 
 public:

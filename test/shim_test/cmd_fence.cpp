@@ -62,10 +62,10 @@ private:
     msg("user fence test started...");
 
     auto dev = shim_xdna::my_get_userpf_device(get_dev_id());
-    auto sfence = dev->create_fence(fence_handle::access_mode::process);
-    auto wfence = dev->create_fence(fence_handle::access_mode::process);
-    auto sshare = sfence->share();
-    auto wshare = wfence->share();
+    auto sfence = dev->create_fence(shim_xdna::fence_handle::access_mode::process);
+    auto wfence = dev->create_fence(shim_xdna::fence_handle::access_mode::process);
+    auto sshare = sfence->share_handle();
+    auto wshare = wfence->share_handle();
     ipc_data idata = { getpid(), sshare->get_export_handle(), wshare->get_export_handle() };
     send_ipc_data(&idata, sizeof(idata));
 
@@ -105,8 +105,8 @@ private:
 
     auto dev = shim_xdna::my_get_userpf_device(get_dev_id());
     auto fence = dev->import_fence(idata.pid, idata.hdl);
-    const std::vector<xrt_core::fence_handle*> wfences{fence.get()};
-    const std::vector<xrt_core::fence_handle*> sfences{};
+    const std::vector<shim_xdna::fence_handle*> wfences{fence.get()};
+    const std::vector<shim_xdna::fence_handle*> sfences{};
 
     auto wrk = get_xclbin_workspace(dev.get());
     io_test_bo_set boset{dev.get(), wrk + "/data/"};
@@ -124,10 +124,10 @@ private:
     msg("device fence test started...");
 
     auto dev = shim_xdna::my_get_userpf_device(get_dev_id());
-    auto fence = dev->create_fence(fence_handle::access_mode::process);
-    const std::vector<xrt_core::fence_handle*> sfences{fence.get()};
-    const std::vector<xrt_core::fence_handle*> wfences{};
-    auto share = fence->share();
+    auto fence = dev->create_fence(shim_xdna::fence_handle::access_mode::process);
+    const std::vector<shim_xdna::fence_handle*> sfences{fence.get()};
+    const std::vector<shim_xdna::fence_handle*> wfences{};
+    auto share = fence->share_handle();
     ipc_data idata = { getpid(), share->get_export_handle() };
     send_ipc_data(&idata, sizeof(idata));
 

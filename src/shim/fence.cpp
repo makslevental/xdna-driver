@@ -3,6 +3,7 @@
 
 #include "fence.h"
 #include "pcidev.h"
+#include "hwctx.h"
 #include "drm_local/amdxdna_accel.h"
 #include <limits>
 
@@ -143,28 +144,28 @@ submit_signal_syncobj(const shim_xdna::pdev& dev, const shim_xdna::hw_ctx *ctx,
 
 namespace shim_xdna {
 
-fence::
-fence(const device& device)
+fence_handle::
+fence_handle(const device& device)
   : m_pdev(device.get_pdev())
-  , m_import(std::make_unique<shared>(-1))
+  , m_import(std::make_unique<shared_handle>(-1))
   , m_syncobj_hdl(create_syncobj(m_pdev))
 {
   shim_debug("Fence allocated: %d@%d", m_syncobj_hdl, m_state);
 }
 
-fence::
-fence(const device& device, xrt_core::shared_handle::export_handle ehdl)
+fence_handle::
+fence_handle(const device& device, shim_xdna::shared_handle::export_handle ehdl)
   : m_pdev(device.get_pdev())
-  , m_import(std::make_unique<shared>(ehdl))
+  , m_import(std::make_unique<shared_handle>(ehdl))
   , m_syncobj_hdl(import_syncobj(m_pdev, m_import->get_export_handle()))
 {
   shim_debug("Fence imported: %d@%ld", m_syncobj_hdl, m_state);
 }
 
-fence::
-fence(const fence& f)
+fence_handle::
+fence_handle(const fence_handle& f)
   : m_pdev(f.m_pdev)
-  , m_import(f.share())
+  , m_import(f.share_handle())
   , m_syncobj_hdl(import_syncobj(m_pdev, m_import->get_export_handle()))
   , m_state{f.m_state}
   , m_signaled{f.m_signaled}
@@ -172,105 +173,105 @@ fence(const fence& f)
   shim_debug("Fence cloned: %d@%ld", m_syncobj_hdl, m_state);
 }
 
-fence::
-~fence()
+fence_handle::
+~fence_handle()
 {
   shim_debug("Fence going away: %d@%ld", m_syncobj_hdl, m_state);
   try {
     destroy_syncobj(m_pdev, m_syncobj_hdl);
   } catch (const xrt_core::system_error& e) {
-    shim_debug("Failed to destroy fence");
+    shim_debug("Failed to destroy fence_handle");
   }
 }
 
-std::unique_ptr<xrt_core::shared_handle>
-fence::
-share() const
+std::unique_ptr<shim_xdna::shared_handle>
+fence_handle::
+share_handle() const
 {
   if (m_state != initial_state)
-    shim_err(-EINVAL, "Can't share fence not at initial state.");
+    shim_err(-EINVAL, "Can't share fence_handle not at initial state.");
 
-  return std::make_unique<shared>(export_syncobj(m_pdev, m_syncobj_hdl));
+  return std::make_unique<shared_handle>(export_syncobj(m_pdev, m_syncobj_hdl));
 }
 
 uint64_t
-fence::
+fence_handle::
 get_next_state() const
 {
   return m_state + 1;
 }
 
-std::unique_ptr<xrt_core::fence_handle>
-fence::
+std::unique_ptr<shim_xdna::fence_handle>
+fence_handle::
 clone() const
 {
-  return std::make_unique<fence>(*this);
+  return std::make_unique<fence_handle>(*this);
 }
 
 uint64_t
-fence::
+fence_handle::
 wait_next_state() const
 {
   std::lock_guard<std::mutex> guard(m_lock);
 
   if (m_state != initial_state && m_signaled)
-    shim_err(-EINVAL, "Can't wait on fence that has been signaled before.");
+    shim_err(-EINVAL, "Can't wait on fence_handle that has been signaled before.");
   return ++m_state;
 }
 
 // Timeout value is ignored for now.
 void
-fence::
+fence_handle::
 wait(uint32_t timeout_ms) const
 {
   auto st = signal_next_state();
-  shim_debug("Waiting for command fence %d@%ld", m_syncobj_hdl, st);
+  shim_debug("Waiting for command fence_handle %d@%ld", m_syncobj_hdl, st);
   wait_syncobj_done(m_pdev, m_syncobj_hdl, st);
 }
 
 void
-fence::
+fence_handle::
 submit_wait(const hw_ctx *ctx) const
 {
   auto st = signal_next_state();
-  shim_debug("Submitting wait for command fence %d@%ld", m_syncobj_hdl, st);
+  shim_debug("Submitting wait for command fence_handle %d@%ld", m_syncobj_hdl, st);
   submit_wait_syncobjs(m_pdev, ctx, &m_syncobj_hdl, &st, 1);
 }
 
 uint64_t
-fence::
+fence_handle::
 signal_next_state() const
 {
   std::lock_guard<std::mutex> guard(m_lock);
 
   if (m_state != initial_state && !m_signaled)
-    shim_err(-EINVAL, "Can't signal fence that has been waited before.");
+    shim_err(-EINVAL, "Can't signal fence_handle that has been waited before.");
   if (m_state == initial_state)
     m_signaled = true;
   return ++m_state;
 }
 
 void
-fence::
+fence_handle::
 signal() const
 {
   auto st = signal_next_state();
-  shim_debug("Signaling command fence %d@%ld", m_syncobj_hdl, st);
+  shim_debug("Signaling command fence_handle %d@%ld", m_syncobj_hdl, st);
   signal_syncobj(m_pdev, m_syncobj_hdl, st);
 }
 
 void
-fence::
+fence_handle::
 submit_signal(const hw_ctx *ctx) const
 {
   auto st = signal_next_state();
-  shim_debug("Submitting signal command fence %d@%ld", m_syncobj_hdl, st);
+  shim_debug("Submitting signal command fence_handle %d@%ld", m_syncobj_hdl, st);
   submit_signal_syncobj(m_pdev, ctx, m_syncobj_hdl, st);
 }
 
 void
-fence::
-submit_wait(const pdev& dev, const hw_ctx *ctx, const std::vector<xrt_core::fence_handle*>& fences)
+fence_handle::
+submit_wait(const pdev& dev, const hw_ctx *ctx, const std::vector<shim_xdna::fence_handle*>& fences)
 {
   constexpr int max_fences = 1024;
   uint32_t hdls[max_fences];
@@ -281,9 +282,9 @@ submit_wait(const pdev& dev, const hw_ctx *ctx, const std::vector<xrt_core::fenc
     shim_err(-EINVAL, "Too many fences in one submit: %d", fences.size());
 
   for (auto f : fences) {
-    auto fh = static_cast<const fence*>(f);
+    auto fh = static_cast<const fence_handle*>(f);
     auto st = fh->wait_next_state();
-    shim_debug("Waiting for command fence %d@%ld", fh->m_syncobj_hdl, st);
+    shim_debug("Waiting for command fence_handle %d@%ld", fh->m_syncobj_hdl, st);
     hdls[i] = fh->m_syncobj_hdl;
     pts[i] = st;
     i++;
