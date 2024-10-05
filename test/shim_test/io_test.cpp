@@ -178,7 +178,6 @@ io_test(shim_xdna::device::id_type id, shim_xdna::device* dev, int total_hwq_sub
 
   // Creating HW context for cmd submission
   hw_ctx hwctx{dev};
-  auto hwq = hwctx.get()->get_hw_queue();
   auto ip_name = find_first_match_ip_name(dev, "DPU.*");
   if (ip_name.empty())
     throw std::runtime_error("Cannot find any kernel name matched DPU.*");
@@ -217,6 +216,7 @@ io_test(shim_xdna::device::id_type id, shim_xdna::device* dev, int total_hwq_sub
 
   // Submit commands and wait for results
   auto start = clk::now();
+  auto hwq = hwctx.get()->get_hw_queue();
   if (io_test_parameters.perf == IO_TEST_THRUPUT_PERF)
     io_test_cmd_submit_and_wait_thruput(hwq, total_hwq_submit, cmdlist_bos);
   else

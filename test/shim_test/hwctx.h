@@ -43,9 +43,7 @@ private:
     dev->record_xclbin(xclbin);
     auto xclbin_uuid = xclbin.get_uuid();
     shim_xdna::device::qos_type qos{ {"gops", 100} };
-    shim_xdna::device::access_mode mode = shim_xdna::device::access_mode::shared;
-
-    m_handle = dev->create_hw_context(xclbin_uuid, qos, mode);
+    m_handle = dev->create_hw_context(xclbin_uuid, qos);
     std::cout << "loaded " << xclbin_path << std::endl;
   }
 };

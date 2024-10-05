@@ -91,16 +91,6 @@ close_device()
   // suicide here. Do not touch anything in this device object after this.
 }
 
-void
-device::
-register_xclbin(const xrt::xclbin& xclbin) const
-{
-  // Do not throw here, just do nothing.
-  // xclbins are registered with xrt coreutil and
-  // loaded by create_hw_context
-}
-
-
 device::id_type
 device::get_device_id() const {
     return 0;
@@ -125,8 +115,7 @@ get_xclbin(const xrt::uuid& xclbin_id) const
 
 std::unique_ptr<hw_ctx>
 device::
-create_hw_context(const xrt::uuid& xclbin_uuid, const qos_type& qos,
-  access_mode mode) const
+create_hw_context(const xrt::uuid& xclbin_uuid, const qos_type& qos) const
 {
   return create_hw_context(*this, get_xclbin(xclbin_uuid), qos);
 }
@@ -170,19 +159,8 @@ void
 device::
 record_xclbin(const xrt::xclbin& xclbin)
 {
-  try {
-    register_xclbin(xclbin); // shim level registration
-  }
-  catch (const std::exception& e) {
-    // Shim does not support register xclbin, meaning it
-    // doesn't support multi-xclbin, so just take the
-    // load_xclbin flow.
-    assert(false);
-  }
-
   std::lock_guard lk(m_mutex);
   m_xclbins.insert(xclbin);
-
   // For single xclbin case, where shim doesn't implement
   // kds_cu_info, we need the current xclbin stored here
   // as a temporary 'global'.  This variable is used when
