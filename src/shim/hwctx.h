@@ -39,19 +39,19 @@ public:
   uint32_t m_doorbell;
   std::unique_ptr<bo> m_log_bo;
   void *m_log_buf;
+  std::vector<std::unique_ptr<bo>> m_pdi_bos;
 
   hw_ctx(const device &dev, const qos_type &qos, std::unique_ptr<hw_q> q,
          const xrt::xclbin &xclbin);
-
-  virtual ~hw_ctx();
+  hw_ctx(const device &dev, const xrt::xclbin &xclbin, const qos_type &qos);
+  ~hw_ctx();
 
   // TODO
   void update_qos(const qos_type &) { shim_not_supported_err(__func__); }
   void update_access_mode(access_mode) { shim_not_supported_err(__func__); }
   slot_id get_slotidx() const;
   hw_q *get_hw_queue();
-  virtual std::unique_ptr<bo> alloc_bo(void *userptr, size_t size,
-                                       uint64_t flags) = 0;
+  std::unique_ptr<bo> alloc_bo(void *userptr, size_t size, uint64_t flags);
   std::unique_ptr<bo> alloc_bo(size_t size, uint64_t flags);
   std::unique_ptr<bo> import_bo(pid_t, shared_handle::export_handle);
   xrt_core::cuidx_type open_cu_context(const std::string &cuname);
@@ -69,16 +69,6 @@ public:
   void init_qos_info(const qos_type &qos);
   void parse_xclbin(const xrt::xclbin &xclbin);
   void print_xclbin_info();
-};
-
-class hw_ctx_kmq : public hw_ctx {
-public:
-  std::vector<std::unique_ptr<bo>> m_pdi_bos;
-
-  hw_ctx_kmq(const device &dev, const xrt::xclbin &xclbin, const qos_type &qos);
-  ~hw_ctx_kmq() override;
-  std::unique_ptr<bo> alloc_bo(void *userptr, size_t size,
-                               uint64_t flags) override;
 };
 
 } // namespace shim_xdna

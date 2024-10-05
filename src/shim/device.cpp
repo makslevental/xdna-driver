@@ -5,15 +5,17 @@
 #include "bo.h"
 #include "fence.h"
 #include "hwctx.h"
-#include "shim.h"
 
 #include <cassert>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
 namespace {
 
-int import_fd(pid_t pid, int ehdl) {
+int64_t import_fd(pid_t pid, int ehdl) {
   if (pid == 0 || getpid() == pid)
     return ehdl;
 
@@ -22,7 +24,7 @@ int import_fd(pid_t pid, int ehdl) {
   if (pidfd < 0)
     throw std::system_error(errno, std::system_category(), "pidfd_open failed");
 
-  auto fd = syscall(SYS_pidfd_getfd, pidfd, ehdl, 0);
+  int64_t fd = syscall(SYS_pidfd_getfd, pidfd, ehdl, 0);
   if (fd < 0) {
     if (errno == EPERM) {
       throw std::system_error(
@@ -30,10 +32,10 @@ int import_fd(pid_t pid, int ehdl) {
           "pidfd_getfd failed, check that ptrace access mode "
           "allows PTRACE_MODE_ATTACH_REALCREDS.  For more details please "
           "check /etc/sysctl.d/10-ptrace.conf");
-    } else {
-      throw std::system_error(errno, std::system_category(),
-                              "pidfd_getfd failed");
     }
+
+    throw std::system_error(errno, std::system_category(),
+                            "pidfd_getfd failed");
   }
   return fd;
 #else
@@ -45,32 +47,76 @@ int import_fd(pid_t pid, int ehdl) {
 #endif
 }
 
+std::string ioctl_cmd2name(unsigned long cmd) {
+  switch (cmd) {
+  case DRM_IOCTL_AMDXDNA_CREATE_HWCTX:
+    return "DRM_IOCTL_AMDXDNA_CREATE_HWCTX";
+  case DRM_IOCTL_AMDXDNA_DESTROY_HWCTX:
+    return "DRM_IOCTL_AMDXDNA_DESTROY_HWCTX";
+  case DRM_IOCTL_AMDXDNA_CONFIG_HWCTX:
+    return "DRM_IOCTL_AMDXDNA_CONFIG_HWCTX";
+  case DRM_IOCTL_AMDXDNA_CREATE_BO:
+    return "DRM_IOCTL_AMDXDNA_CREATE_BO";
+  case DRM_IOCTL_AMDXDNA_GET_BO_INFO:
+    return "DRM_IOCTL_AMDXDNA_GET_BO_INFO";
+  case DRM_IOCTL_AMDXDNA_SYNC_BO:
+    return "DRM_IOCTL_AMDXDNA_SYNC_BO";
+  case DRM_IOCTL_AMDXDNA_EXEC_CMD:
+    return "DRM_IOCTL_AMDXDNA_EXEC_CMD";
+  case DRM_IOCTL_AMDXDNA_WAIT_CMD:
+    return "DRM_IOCTL_AMDXDNA_WAIT_CMD";
+  case DRM_IOCTL_AMDXDNA_GET_INFO:
+    return "DRM_IOCTL_AMDXDNA_GET_INFO";
+  case DRM_IOCTL_AMDXDNA_SET_STATE:
+    return "DRM_IOCTL_AMDXDNA_SET_STATE";
+  case DRM_IOCTL_GEM_CLOSE:
+    return "DRM_IOCTL_GEM_CLOSE";
+  case DRM_IOCTL_PRIME_HANDLE_TO_FD:
+    return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
+  case DRM_IOCTL_PRIME_FD_TO_HANDLE:
+    return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
+  case DRM_IOCTL_SYNCOBJ_CREATE:
+    return "DRM_IOCTL_SYNCOBJ_CREATE";
+  case DRM_IOCTL_SYNCOBJ_QUERY:
+    return "DRM_IOCTL_SYNCOBJ_QUERY";
+  case DRM_IOCTL_SYNCOBJ_DESTROY:
+    return "DRM_IOCTL_SYNCOBJ_DESTROY";
+  case DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD:
+    return "DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD";
+  case DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE:
+    return "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE";
+  case DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL:
+    return "DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL";
+  case DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT:
+    return "DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT";
+  default:
+    return "UNKNOWN(" + std::to_string(cmd) + ")";
+  }
+
+  return "UNKNOWN(" + std::to_string(cmd) + ")";
+}
+
+// Device memory heap needs to be within one 64MB page. The maximum size is
+// 64MB.
+const size_t dev_mem_size = (64 << 20);
+
+std::vector<std::shared_ptr<shim_xdna::pdev>> user_ready_list;
+
 } // namespace
 
 namespace shim_xdna {
 
-device::device(const pdev &pdev, handle_type shim_handle, id_type device_id)
-    : m_handle(shim_handle), m_device_id(device_id), m_userpf(true),
-      m_pdev(pdev) {
+device::device(const pdev &pdev) : m_pdev(pdev) {
   m_pdev.open();
+  shim_debug("Created KMQ device (%s) ...");
 }
 
-device::~device() { m_pdev.close(); }
+device::~device() {
+  m_pdev.close();
+  shim_debug("Destroying KMQ device (%s) ...");
+}
 
 const pdev &device::get_pdev() const { return m_pdev; }
-
-void *device::get_device_handle() const { return m_handle; }
-
-void device::close_device() {
-  auto s = reinterpret_cast<shim *>(get_device_handle());
-  if (s)
-    delete s;
-  // When shim is gone, the last ref to this device object will be removed
-  // which will cause this object to be destruted. We're essentially committing
-  // suicide here. Do not touch anything in this device object after this.
-}
-
-device::id_type device::get_device_id() const { return 0; }
 
 xrt::xclbin device::get_xclbin(const xrt::uuid &xclbin_id) const {
   // Allow access to xclbin in process of loading via device::load_xclbin
@@ -81,7 +127,7 @@ xrt::xclbin device::get_xclbin(const xrt::uuid &xclbin_id) const {
 
 std::unique_ptr<hw_ctx> device::create_hw_context(const xrt::uuid &xclbin_uuid,
                                                   const qos_type &qos) const {
-  return create_hw_context(*this, get_xclbin(xclbin_uuid), qos);
+  return std::make_unique<hw_ctx>(*this, get_xclbin(xclbin_uuid), qos);
 }
 
 std::unique_ptr<bo> device::alloc_bo(size_t size, uint64_t flags) {
@@ -109,40 +155,25 @@ device::import_fence(pid_t pid, shared_handle::export_handle ehdl) {
 
 void device::record_xclbin(const xrt::xclbin &xclbin) {
   std::lock_guard lk(m_mutex);
-  m_xclbins.insert(xclbin);
+  m_xclbins[xclbin.get_uuid()] = xclbin;
   m_xclbin = xclbin;
 }
 
-device_kmq::device_kmq(const pdev &pdev, handle_type shim_handle,
-                       id_type device_id)
-    : device(pdev, shim_handle, device_id) {
-  shim_debug("Created KMQ device (%s) ...");
-}
-
-device_kmq::~device_kmq() { shim_debug("Destroying KMQ device (%s) ..."); }
-
-std::unique_ptr<hw_ctx>
-device_kmq::create_hw_context(const device &dev, const xrt::xclbin &xclbin,
-                              const hw_ctx::qos_type &qos) const {
-  return std::make_unique<hw_ctx_kmq>(dev, xclbin, qos);
-}
-
-std::unique_ptr<bo> device_kmq::alloc_bo(void *userptr, hw_ctx::slot_id ctx_id,
-                                         size_t size, uint64_t flags) {
+std::unique_ptr<bo> device::alloc_bo(void *userptr, hw_ctx::slot_id ctx_id,
+                                     size_t size, uint64_t flags) {
   if (userptr)
     shim_not_supported_err("User ptr BO");
 
-  return std::make_unique<bo_kmq>(*this, ctx_id, size, flags);
+  return std::make_unique<bo>(*this, ctx_id, size, flags);
 }
 
-std::unique_ptr<bo>
-device_kmq::import_bo(shared_handle::export_handle ehdl) const {
-  return std::make_unique<bo_kmq>(*this, ehdl);
+std::unique_ptr<bo> device::import_bo(shared_handle::export_handle ehdl) const {
+  return std::make_unique<bo>(*this, ehdl);
 }
 
 std::vector<char> device::read_aie_mem(uint16_t col, uint16_t row,
                                        uint32_t offset, uint32_t size) {
-  amdxdna_drm_aie_mem mem;
+  amdxdna_drm_aie_mem mem{};
   std::vector<char> store_buf(size);
   mem.col = col;
   mem.row = row;
@@ -157,7 +188,7 @@ std::vector<char> device::read_aie_mem(uint16_t col, uint16_t row,
 }
 
 uint32_t device::read_aie_reg(uint16_t col, uint16_t row, uint32_t reg_addr) {
-  amdxdna_drm_aie_reg reg;
+  amdxdna_drm_aie_reg reg{};
   reg.col = col;
   reg.row = row;
   reg.addr = reg_addr;
@@ -171,7 +202,7 @@ uint32_t device::read_aie_reg(uint16_t col, uint16_t row, uint32_t reg_addr) {
 
 size_t device::write_aie_mem(uint16_t col, uint16_t row, uint32_t offset,
                              const std::vector<char> &buf) {
-  amdxdna_drm_aie_mem mem;
+  amdxdna_drm_aie_mem mem{};
   uint32_t size = static_cast<uint32_t>(buf.size());
   mem.col = col;
   mem.row = row;
@@ -187,7 +218,7 @@ size_t device::write_aie_mem(uint16_t col, uint16_t row, uint32_t offset,
 
 void device::write_aie_reg(uint16_t col, uint16_t row, uint32_t reg_addr,
                            uint32_t reg_val) {
-  amdxdna_drm_aie_reg reg;
+  amdxdna_drm_aie_reg reg{};
   reg.col = col;
   reg.row = row;
   reg.addr = reg_addr;
@@ -196,6 +227,99 @@ void device::write_aie_reg(uint16_t col, uint16_t row, uint32_t reg_addr,
                               .buffer_size = sizeof(reg),
                               .buffer = reinterpret_cast<uintptr_t>(&reg)};
   m_pdev.ioctl(DRM_IOCTL_AMDXDNA_SET_STATE, &arg);
+}
+
+pdev::pdev() { shim_debug("Created KMQ pcidev"); }
+
+pdev::~pdev() {
+  if (m_dev_fd != -1)
+    shim_debug("Device node fd leaked!! fd=%d", m_dev_fd);
+  shim_debug("Destroying KMQ pcidev");
+}
+
+void pdev::open() const {
+  int fd;
+  const std::lock_guard lock(m_lock);
+
+  if (m_dev_users == 0) {
+    fd = ::open("/dev/accel/accel0", O_RDWR);
+    if (fd < 0)
+      shim_err(EINVAL, "Failed to open KMQ device");
+    shim_debug("Device opened, fd=%d", fd);
+    // Publish the fd for other threads to use.
+    m_dev_fd = fd;
+  }
+  ++m_dev_users;
+}
+
+void pdev::close() const {
+  int fd;
+  const std::lock_guard lock(m_lock);
+
+  --m_dev_users;
+  if (m_dev_users == 0) {
+    on_last_close();
+
+    // Stop new users of the fd from other threads.
+    fd = m_dev_fd;
+    m_dev_fd = -1;
+    // Kernel will wait for existing users to quit.
+    ::close(fd);
+    shim_debug("Device closed, fd=%d", fd);
+  }
+}
+
+void pdev::ioctl(unsigned long cmd, void *arg) const {
+  if (::ioctl(m_dev_fd, cmd, arg) == -1)
+    shim_err(errno, "%s IOCTL failed", ioctl_cmd2name(cmd).c_str());
+}
+
+void *pdev::mmap(void *addr, size_t len, int prot, int flags,
+                 off_t offset) const {
+  void *ret = ::mmap(addr, len, prot, flags, m_dev_fd, offset);
+
+  if (ret == reinterpret_cast<void *>(-1))
+    shim_err(errno,
+             "mmap(addr=%p, len=%ld, prot=%d, flags=%d, offset=%ld) failed",
+             addr, len, prot, flags, offset);
+  return ret;
+}
+
+std::shared_ptr<device> pdev::create_device() const {
+  auto dev = std::make_shared<device>(*this);
+  try {
+    const std::lock_guard lock(m_lock);
+    if (m_dev_heap_bo == nullptr)
+      m_dev_heap_bo =
+          std::make_unique<bo>(*dev, dev_mem_size, AMDXDNA_BO_DEV_HEAP);
+  } catch (const std::system_error &ex) {
+    if (ex.code().value() != EBUSY)
+      throw;
+  }
+  return dev;
+}
+
+void pdev::on_last_close() const { m_dev_heap_bo.reset(); }
+
+std::shared_ptr<pdev> create_pcidev() { return std::make_shared<pdev>(); }
+
+void add_to_user_ready_list(const std::shared_ptr<pdev> &dev) {
+  user_ready_list.push_back(dev);
+}
+
+std::shared_ptr<pdev> get_dev(unsigned index) {
+  return user_ready_list.at(index);
+}
+
+std::shared_ptr<device> my_get_userpf_device(device::id_t id) {
+  const auto &pdev = get_dev(id);
+  return pdev->create_device();
+}
+
+std::unique_ptr<hw_ctx> create_hw_context(const device &dev,
+                                          const xrt::xclbin &xclbin,
+                                          const hw_ctx::qos_type &qos) {
+  return std::make_unique<hw_ctx>(dev, xclbin, qos);
 }
 
 } // namespace shim_xdna

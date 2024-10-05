@@ -42,6 +42,7 @@ hw_ctx::~hw_ctx() {
     shim_debug("Failed to delete context on device: %s", e.what());
   }
   shim_debug("Destroyed HW context (%d)...", m_handle);
+  shim_debug("Destroying KMQ HW context (%d)...", get_slotidx());
 }
 
 hw_ctx::slot_id hw_ctx::get_slotidx() const { return m_handle; }
@@ -186,9 +187,9 @@ void hw_ctx::set_doorbell(uint32_t db) { m_doorbell = db; }
 
 uint32_t hw_ctx::get_doorbell() const { return m_doorbell; }
 
-hw_ctx_kmq::hw_ctx_kmq(const device &device, const xrt::xclbin &xclbin,
-                       const qos_type &qos)
-    : hw_ctx(device, qos, std::make_unique<hw_q_kmq>(device), xclbin) {
+hw_ctx::hw_ctx(const device &device, const xrt::xclbin &xclbin,
+               const qos_type &qos)
+    : hw_ctx(device, qos, std::make_unique<hw_q>(device), xclbin) {
   create_ctx_on_device();
   auto cu_info = get_cu_info();
   std::vector<char> cu_conf_param_buf(sizeof(amdxdna_hwctx_param_config_cu) +
@@ -224,15 +225,10 @@ hw_ctx_kmq::hw_ctx_kmq(const device &device, const xrt::xclbin &xclbin,
   shim_debug("Created KMQ HW context (%d)", get_slotidx());
 }
 
-hw_ctx_kmq::~hw_ctx_kmq() {
-  shim_debug("Destroying KMQ HW context (%d)...", get_slotidx());
-}
-
-std::unique_ptr<bo> hw_ctx_kmq::alloc_bo(void *userptr, size_t size,
-                                         uint64_t flags) {
+std::unique_ptr<bo> hw_ctx::alloc_bo(void *userptr, size_t size,
+                                     uint64_t flags) {
   // const_cast: alloc_bo() is not const yet in device class
   auto &dev = const_cast<device &>(get_device());
-
   // Debug buffer is specific to one context.
   if (xcl_bo_flags{flags}.use == XRT_BO_USE_DEBUG)
     return dev.alloc_bo(userptr, get_slotidx(), size, flags);

@@ -14,8 +14,6 @@ add_library(${XDNA_TARGET} SHARED
   ${MAIN_SOURCES}
   ${KMQ_SOURCES}
   ${UMQ_SOURCES}
-  shim_debug.cpp
-  get_user_pf.cpp
   )
 
 file(GLOB _headers "${CMAKE_CURRENT_LIST_DIR}/*.h")

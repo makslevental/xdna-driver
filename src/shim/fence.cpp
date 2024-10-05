@@ -3,7 +3,6 @@
 
 #include "fence.h"
 #include "hwctx.h"
-#include "pcidev.h"
 
 #include <limits>
 

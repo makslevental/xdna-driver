@@ -53,7 +53,7 @@ void *map_drm_bo(const shim_xdna::pdev &dev, void *addr, size_t size, int prot,
 }
 
 void unmap_drm_bo(const shim_xdna::pdev &dev, void *addr, size_t size) {
-  dev.munmap(addr, size);
+  munmap(addr, size);
 }
 
 void attach_dbg_drm_bo(const shim_xdna::pdev &dev, uint32_t boh,
@@ -279,12 +279,78 @@ bo::bo(const device &device, uint32_t ctx_id, size_t size, uint64_t flags)
 bo::bo(const device &device, hw_ctx::slot_id ctx_id, size_t size,
        uint64_t flags, amdxdna_bo_type type)
     : m_pdev(device.get_pdev()), m_aligned_size(size), m_flags(flags),
-      m_type(type), m_import(-1), m_owner_ctx_id(ctx_id) {}
+      m_type(type), m_import(-1), m_owner_ctx_id(ctx_id) {
+  size_t align = 0;
 
-bo::bo(const device &device, shim_xdna::shared_handle::export_handle ehdl)
-    : m_pdev(device.get_pdev()), m_import(ehdl) {}
+  if (m_type == AMDXDNA_BO_DEV_HEAP)
+    align = 64 * 1024 * 1024; // Device mem heap must align at 64MB boundary.
 
-bo::~bo() = default;
+  alloc_bo();
+  mmap_bo(align);
+
+  // Newly allocated buffer may contain dirty pages. If used as output buffer,
+  // the data in cacheline will be flushed onto memory and pollute the output
+  // from device. We perform a cache flush right after the BO is allocated to
+  // avoid this issue.
+  if (m_type == AMDXDNA_BO_SHMEM)
+    sync(direction::host2device, size, 0);
+
+  attach_to_ctx();
+#ifndef NDEBUG
+  switch (m_flags) {
+  case 0x0:
+    shim_debug("allocating dev heap");
+    break;
+  case 0x1000000:
+    // pdi bo
+    shim_debug("allocating pdi bo");
+    break;
+  case 0x20000000:
+    // XCL_BO_FLAGS_P2P in create_free_bo test
+    shim_debug("allocating XCL_BO_FLAGS_P2P");
+    break;
+  case 0x80000000:
+    // XCL_BO_FLAGS_EXECBUF in create_free_bo test
+    shim_debug("allocating XCL_BO_FLAGS_EXECBUF");
+    break;
+  case 0x1001000000:
+    // debug bo
+    shim_debug("allocating debug bo");
+    break;
+  default:
+    shim_err(-1, "unknown flags %d", flags);
+  }
+#endif
+
+  shim_debug("Allocated KMQ BO (userptr=0x%lx, size=%ld, flags=0x%llx, "
+             "type=%d, drm_bo=%d)",
+             m_aligned, m_aligned_size, m_flags, m_type, get_drm_bo_handle());
+}
+
+bo::bo(const device &device, shared_handle::export_handle ehdl)
+    : m_pdev(device.get_pdev()), m_import(ehdl) {
+  import_bo();
+  mmap_bo();
+  shim_debug("Imported KMQ BO (userptr=0x%lx, size=%ld, flags=0x%llx, type=%d, "
+             "drm_bo=%d)",
+             m_aligned, m_aligned_size, m_flags, m_type, get_drm_bo_handle());
+}
+
+bo::~bo() {
+  shim_debug("Freeing KMQ BO, %s", describe().c_str());
+
+  munmap_bo();
+  try {
+    detach_from_ctx();
+    // If BO is in use, we should block and wait in driver
+    free_bo();
+  } catch (const std::system_error &e) {
+    shim_debug("Failed to free BO: %s", e.what());
+  }
+}
+
+bo::bo(const device &device, size_t size, amdxdna_bo_type type)
+    : bo(device, AMDXDNA_INVALID_CTX_HANDLE, size, 0, type) {}
 
 bo::properties bo::get_properties() const {
   return {m_flags, m_aligned_size, get_paddr(), get_drm_bo_handle()};
@@ -339,90 +405,7 @@ std::unique_ptr<shim_xdna::shared_handle> bo::share() const {
 
 amdxdna_bo_type bo::get_type() const { return m_type; }
 
-bo_kmq::bo_kmq(const device &device, hw_ctx::slot_id ctx_id, size_t size,
-               uint64_t flags)
-    : bo_kmq(device, ctx_id, size, flags, flag_to_type(flags)) {
-  if (m_type == AMDXDNA_BO_INVALID)
-    shim_err(EINVAL, "Invalid BO flags: 0x%lx", flags);
-}
-
-bo_kmq::bo_kmq(const device &device, size_t size, amdxdna_bo_type type)
-    : bo_kmq(device, AMDXDNA_INVALID_CTX_HANDLE, size, 0, type) {}
-
-bo_kmq::bo_kmq(const device &device, hw_ctx::slot_id ctx_id, size_t size,
-               uint64_t flags, amdxdna_bo_type type)
-    : bo(device, ctx_id, size, flags, type) {
-  size_t align = 0;
-
-  if (m_type == AMDXDNA_BO_DEV_HEAP)
-    align = 64 * 1024 * 1024; // Device mem heap must align at 64MB boundary.
-
-  alloc_bo();
-  mmap_bo(align);
-
-  // Newly allocated buffer may contain dirty pages. If used as output buffer,
-  // the data in cacheline will be flushed onto memory and pollute the output
-  // from device. We perform a cache flush right after the BO is allocated to
-  // avoid this issue.
-  if (m_type == AMDXDNA_BO_SHMEM)
-    sync(direction::host2device, size, 0);
-
-  attach_to_ctx();
-#ifndef NDEBUG
-  switch (m_flags) {
-  case 0x0:
-    shim_debug("allocating dev heap");
-    break;
-  case 0x1000000:
-    // pdi bo
-    shim_debug("allocating pdi bo");
-    break;
-  case 0x20000000:
-    // XCL_BO_FLAGS_P2P in create_free_bo test
-    shim_debug("allocating XCL_BO_FLAGS_P2P");
-    break;
-  case 0x80000000:
-    // XCL_BO_FLAGS_EXECBUF in create_free_bo test
-    shim_debug("allocating XCL_BO_FLAGS_EXECBUF");
-    break;
-  case 0x1001000000:
-    // debug bo
-    shim_debug("allocating debug bo");
-    break;
-  default:
-    shim_err(-1, "unknown flags %d", flags);
-  }
-#endif
-
-  shim_debug("Allocated KMQ BO (userptr=0x%lx, size=%ld, flags=0x%llx, "
-             "type=%d, drm_bo=%d)",
-             m_aligned, m_aligned_size, m_flags, m_type, get_drm_bo_handle());
-}
-
-bo_kmq::bo_kmq(const device &device,
-               shim_xdna::shared_handle::export_handle ehdl)
-    : bo(device, ehdl) {
-  import_bo();
-  mmap_bo();
-  shim_debug("Imported KMQ BO (userptr=0x%lx, size=%ld, flags=0x%llx, type=%d, "
-             "drm_bo=%d)",
-             m_aligned, m_aligned_size, m_flags, m_type, get_drm_bo_handle());
-}
-
-bo_kmq::~bo_kmq() {
-  shim_debug("Freeing KMQ BO, %s", describe().c_str());
-
-  munmap_bo();
-  try {
-    detach_from_ctx();
-    // If BO is in use, we should block and wait in driver
-    free_bo();
-  } catch (const std::system_error &e) {
-    shim_debug("Failed to free BO: %s", e.what());
-  }
-}
-
-void bo_kmq::sync(direction dir, size_t size, size_t offset) {
+void bo::sync(direction dir, size_t size, size_t offset) {
   if (is_driver_sync()) {
     sync_drm_bo(m_pdev, get_drm_bo_handle(), dir, offset, size);
     return;
@@ -448,8 +431,8 @@ void bo_kmq::sync(direction dir, size_t size, size_t offset) {
   }
 }
 
-void bo_kmq::bind_at(size_t pos, const bo *bh, size_t offset, size_t size) {
-  auto boh = reinterpret_cast<const bo_kmq *>(bh);
+void bo::bind_at(size_t pos, const bo *bh, size_t offset, size_t size) {
+  auto boh = reinterpret_cast<const bo *>(bh);
   std::lock_guard<std::mutex> lg(m_args_map_lock);
 
   if (m_type != AMDXDNA_BO_CMD)
@@ -478,7 +461,7 @@ void bo_kmq::bind_at(size_t pos, const bo *bh, size_t offset, size_t size) {
   }
 }
 
-uint32_t bo_kmq::get_arg_bo_handles(uint32_t *handles, size_t num) const {
+uint32_t bo::get_arg_bo_handles(uint32_t *handles, size_t num) const {
   std::lock_guard<std::mutex> lg(m_args_map_lock);
 
   auto sz = m_args_map.size();

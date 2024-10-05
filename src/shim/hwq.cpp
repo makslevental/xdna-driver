@@ -44,7 +44,9 @@ namespace shim_xdna {
 
 hw_q::hw_q(const device &device)
     : m_hwctx(nullptr), m_queue_boh(AMDXDNA_INVALID_BO_HANDLE),
-      m_pdev(device.get_pdev()) {}
+      m_pdev(device.get_pdev()) {
+  shim_debug("Created KMQ HW queue");
+}
 
 void hw_q::bind_hwctx(const hw_ctx *ctx) {
   m_hwctx = ctx;
@@ -83,19 +85,14 @@ void hw_q::submit_wait(const std::vector<fence_handle *> &fences) {
 
 void hw_q::submit_signal(const fence_handle *f) { f->submit_signal(m_hwctx); }
 
-hw_q_kmq::hw_q_kmq(const device &device) : hw_q(device) {
-  shim_debug("Created KMQ HW queue");
-}
+hw_q::~hw_q() { shim_debug("Destroying KMQ HW queue"); }
 
-hw_q_kmq::~hw_q_kmq() { shim_debug("Destroying KMQ HW queue"); }
-
-void hw_q_kmq::issue_command(bo *cmd_bo) {
+void hw_q::issue_command(bo *cmd_bo) {
   // Assuming 1024 max args per cmd bo
   const size_t max_arg_bos = 1024;
 
   uint32_t arg_bo_hdls[max_arg_bos];
-  auto boh = dynamic_cast<bo_kmq *>(cmd_bo);
-  uint32_t cmd_bo_hdl = boh->get_drm_bo_handle();
+  uint32_t cmd_bo_hdl = cmd_bo->get_drm_bo_handle();
 
   amdxdna_drm_exec_cmd ecmd = {
       .hwctx = m_hwctx->get_slotidx(),
@@ -103,18 +100,13 @@ void hw_q_kmq::issue_command(bo *cmd_bo) {
       .cmd_handles = cmd_bo_hdl,
       .args = reinterpret_cast<uintptr_t>(arg_bo_hdls),
       .cmd_count = 1,
-      .arg_count = boh->get_arg_bo_handles(arg_bo_hdls, max_arg_bos),
+      .arg_count = cmd_bo->get_arg_bo_handles(arg_bo_hdls, max_arg_bos),
   };
   m_pdev.ioctl(DRM_IOCTL_AMDXDNA_EXEC_CMD, &ecmd);
 
   auto id = ecmd.seq;
-  boh->set_cmd_id(id);
+  cmd_bo->set_cmd_id(id);
   shim_debug("Submitted command (%ld)", id);
-}
-
-void hw_q_kmq::bind_hwctx(const hw_ctx *ctx) {
-  // link hwctx by parent class
-  hw_q::bind_hwctx(ctx);
 }
 
 } // namespace shim_xdna

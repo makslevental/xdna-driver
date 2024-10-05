@@ -17,7 +17,8 @@ public:
   uint32_t m_queue_boh;
 
   hw_q(const device &device);
-  virtual ~hw_q() = default;
+  ~hw_q();
+
   void submit_command(bo *);
   int poll_command(bo *) const;
   int wait_command(bo *, uint32_t timeout_ms) const;
@@ -29,18 +30,10 @@ public:
     shim_not_supported_err(__func__);
   }
 
-  virtual void bind_hwctx(const hw_ctx *ctx) = 0;
+  void bind_hwctx(const hw_ctx *ctx);
   void unbind_hwctx();
   uint32_t get_queue_bo();
-  virtual void issue_command(bo *) = 0;
-};
-
-class hw_q_kmq : public hw_q {
-public:
-  hw_q_kmq(const device &device);
-  ~hw_q_kmq() override;
-  void bind_hwctx(const hw_ctx *ctx) override;
-  void issue_command(bo *) override;
+  void issue_command(bo *);
 };
 
 } // namespace shim_xdna

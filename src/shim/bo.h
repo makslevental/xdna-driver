@@ -7,7 +7,6 @@
 #include "amdxdna_accel.h"
 #include "device.h"
 #include "hwctx.h"
-#include "pcidev.h"
 #include "shared.h"
 
 #include <string>
@@ -107,6 +106,9 @@ public:
   amdxdna_bo_type m_type = AMDXDNA_BO_INVALID;
   std::unique_ptr<drm_bo> m_bo;
   const shared_handle m_import;
+  // Only for AMDXDNA_BO_CMD type
+  std::map<size_t, uint32_t> m_args_map;
+  mutable std::mutex m_args_map_lock;
 
   // Command ID in the queue after command submission.
   // Only valid for cmd BO.
@@ -120,11 +122,13 @@ public:
      amdxdna_bo_type type);
   bo(const device &device, uint32_t ctx_id, size_t size, uint64_t flags);
   bo(const device &device, shared_handle::export_handle ehdl);
+  // Support BO creation from internal
+  bo(const device &device, size_t size, amdxdna_bo_type type);
+  ~bo();
 
-  virtual ~bo();
   void *map(map_type);
   void unmap(void *addr);
-  virtual void sync(direction, size_t size, size_t offset) = 0;
+  void sync(direction, size_t size, size_t offset);
   properties get_properties() const;
   std::unique_ptr<shared_handle> share() const;
   // For cmd BO only
@@ -134,7 +138,7 @@ public:
   uint32_t get_drm_bo_handle() const;
   amdxdna_bo_type get_type() const;
   // DRM BO managed by driver.
-  virtual void bind_at(size_t pos, const bo *bh, size_t offset, size_t size) {}
+  void bind_at(size_t pos, const bo *bh, size_t offset, size_t size);
   std::string describe() const;
   // Alloc DRM BO from driver
   void alloc_bo();
@@ -148,25 +152,6 @@ public:
   std::string type_to_name() const;
   void attach_to_ctx();
   void detach_from_ctx();
-};
-
-class bo_kmq : public bo {
-public:
-  // Only for AMDXDNA_BO_CMD type
-  std::map<size_t, uint32_t> m_args_map;
-  mutable std::mutex m_args_map_lock;
-
-  bo_kmq(const device &device, hw_ctx::slot_id ctx_id, size_t size,
-         uint64_t flags);
-  bo_kmq(const device &device, shared_handle::export_handle ehdl);
-  // Support BO creation from internal
-  bo_kmq(const device &device, size_t size, amdxdna_bo_type type);
-  bo_kmq(const device &device, hw_ctx::slot_id ctx_id, size_t size,
-         uint64_t flags, amdxdna_bo_type type);
-  ~bo_kmq() override;
-
-  void sync(direction dir, size_t size, size_t offset) override;
-  void bind_at(size_t pos, const bo *bh, size_t offset, size_t size) override;
   // Obtain array of arg BO handles, returns real number of handles
   uint32_t get_arg_bo_handles(uint32_t *handles, size_t num) const;
 };

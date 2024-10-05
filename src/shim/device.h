@@ -16,93 +16,31 @@ class pdev;
 class bo;
 using slot_id = uint32_t;
 
-class xclbin_map {
-public:
-  std::map<slot_id, xrt::uuid> m_slot2uuid;
-  std::map<xrt::uuid, xrt::xclbin> m_xclbins;
-  // Reset the slot -> uuid mapping based on quieried slot info data
-  void reset(std::map<slot_id, xrt::uuid> &&slot2uuid) {
-    m_slot2uuid = std::move(slot2uuid);
-  }
-
-  // Cache an xclbin
-  void insert(xrt::xclbin xclbin) {
-    m_xclbins[xclbin.get_uuid()] = std::move(xclbin);
-  }
-
-  // Get an xclbin with specified uuid
-  const xrt::xclbin &get(const xrt::uuid &uuid) const {
-    auto itr = m_xclbins.find(uuid);
-    if (itr == m_xclbins.end())
-      throw std::system_error(EINVAL, std::system_category(),
-                              "No xclbin with uuid '" + uuid.to_string() + "'");
-
-    return (*itr).second;
-  }
-
-  // Get the xclbin stored in specified slot
-  // It is an error if the xclbin has not been explicitly loaded.
-  const xrt::xclbin &get(slot_id slot) const {
-    auto itr = m_slot2uuid.find(slot);
-    if (itr == m_slot2uuid.end())
-      throw std::system_error(EINVAL, std::system_category(),
-                              "No xclbin in slot");
-
-    return get((*itr).second);
-  }
-
-  // Return slot indices sorted
-  std::vector<slot_id> get_slots(const xrt::uuid &uuid) const {
-    std::vector<slot_id> slots;
-    for (auto &su : m_slot2uuid)
-      if (su.second == uuid)
-        slots.push_back(su.first);
-
-    std::sort(slots.begin(), slots.end());
-    return slots;
-  }
-};
-
 class device {
 public:
-  // device index type
-  using id_type = unsigned int;
-  using handle_type = void *;
+  using id_t = unsigned int;
   using cfg_param_type = std::map<std::string, uint32_t>;
   using qos_type = cfg_param_type; // alias to old type
   enum class access_mode : uint8_t { exclusive = 0, shared = 1 };
 
-  void *m_handle = nullptr;
-  bool m_userpf;
-  id_type m_device_id;
   xrt::xclbin m_xclbin; // currently loaded xclbin  (single-slot, default)
   mutable std::mutex m_mutex;
-  xclbin_map m_xclbins; // currently loaded xclbins (multi-slot)
-  const pdev &m_pdev;   // The pcidev that this device object is derived from
-  std::map<uint32_t, bo *> m_bo_map;
+  std::map<xrt::uuid, xrt::xclbin> m_xclbins;
+  const pdev &m_pdev; // The pcidev that this device object is derived from
 
-  device(const pdev &pdev, handle_type shim_handle, id_type device_id);
-  virtual ~device();
+  device(const pdev &pdev);
+  ~device();
 
-  id_type get_device_id() const;
-  void *get_device_handle() const;
   xrt::xclbin get_xclbin(const xrt::uuid &xclbin_id) const;
 
-  virtual std::unique_ptr<hw_ctx>
-  create_hw_context(const device &dev, const xrt::xclbin &xclbin,
-                    const qos_type &qos) const = 0;
-
-  virtual std::unique_ptr<bo>
-  import_bo(shared_handle::export_handle ehdl) const = 0;
+  std::unique_ptr<bo> import_bo(shared_handle::export_handle ehdl) const;
   const pdev &get_pdev() const;
 
-  virtual std::unique_ptr<bo> alloc_bo(void *userptr, slot_id ctx_id,
-                                       size_t size, uint64_t flags) = 0;
+  std::unique_ptr<bo> alloc_bo(void *userptr, slot_id ctx_id, size_t size,
+                               uint64_t flags);
 
-  void close_device();
   std::unique_ptr<bo> alloc_bo(size_t size, uint64_t flags);
-  virtual std::unique_ptr<bo> alloc_bo(void *userptr, size_t size,
-                                       uint64_t flags);
+  std::unique_ptr<bo> alloc_bo(void *userptr, size_t size, uint64_t flags);
   std::unique_ptr<bo> import_bo(pid_t, shared_handle::export_handle);
   std::unique_ptr<hw_ctx> create_hw_context(const xrt::uuid &xclbin_uuid,
                                             const qos_type &qos) const;
@@ -119,22 +57,35 @@ public:
   void record_xclbin(const xrt::xclbin &xclbin);
 };
 
-class device_kmq : public device {
+class pdev {
 public:
-  device_kmq(const pdev &pdev, handle_type shim_handle, id_type device_id);
-  ~device_kmq() override;
+  mutable std::mutex m_lock;
+  mutable int m_dev_fd = -1;
+  mutable int m_dev_users = 0;
 
-  using slot_id = uint32_t;
-  std::unique_ptr<bo> alloc_bo(void *userptr, slot_id ctx_id, size_t size,
-                               uint64_t flags) override;
+  // Create on first device creation and removed right before device is closed
+  mutable std::unique_ptr<bo> m_dev_heap_bo;
 
-  std::unique_ptr<hw_ctx> create_hw_context(const device &dev,
-                                            const xrt::xclbin &xclbin,
-                                            const qos_type &qos) const override;
+  pdev();
+  ~pdev();
 
-  std::unique_ptr<bo>
-  import_bo(shared_handle::export_handle ehdl) const override;
+  std::shared_ptr<device> create_device() const;
+
+  void ioctl(unsigned long cmd, void *arg) const;
+  void *mmap(void *addr, size_t len, int prot, int flags, off_t offset) const;
+  void open() const;
+  void close() const;
+  void on_last_close() const;
 };
+
+std::shared_ptr<pdev> create_pcidev();
+
+std::shared_ptr<device> my_get_userpf_device(device::id_t id);
+void add_to_user_ready_list(const std::shared_ptr<pdev> &dev);
+
+std::unique_ptr<hw_ctx> create_hw_context(const device &dev,
+                                          const xrt::xclbin &xclbin,
+                                          const device::qos_type &qos);
 
 } // namespace shim_xdna
 

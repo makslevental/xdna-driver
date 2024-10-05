@@ -4,15 +4,14 @@
 #ifndef _SHIMTEST_2PROC_H_
 #define _SHIMTEST_2PROC_H_
 
-#include <cstdarg>
 #include <csignal>
-#include <sys/wait.h>
+#include <cstdarg>
 #include <iostream>
+#include <sys/wait.h>
 
 class test_2proc {
 public:
-  test_2proc(shim_xdna::device::id_type id) : m_id(id)
-  {
+  test_2proc(shim_xdna::device::id_t id) : m_id(id) {
     int p_pipefd[2] = {-1, -1};
     int c_pipefd[2] = {-1, -1};
 
@@ -44,11 +43,11 @@ public:
       close(p_pipefd[0]);
     }
 
-    std::cout << (m_is_parent ? "Parent" : "Child") << " started: " << getpid() << std::endl;
+    std::cout << (m_is_parent ? "Parent" : "Child") << " started: " << getpid()
+              << std::endl;
   }
 
-  ~test_2proc()
-  {
+  ~test_2proc() {
     close(m_read_fd);
     close(m_write_fd);
     if (m_is_parent)
@@ -57,16 +56,14 @@ public:
       _exit(m_child_failed ? EXIT_FAILURE : EXIT_SUCCESS);
   }
 
-  void
-  run_test()
-  {
+  void run_test() {
     if (m_is_parent) {
       run_test_parent();
       wait_for_child();
     } else {
       try {
         run_test_child();
-      } catch (const std::exception& ex) {
+      } catch (const std::exception &ex) {
         std::cout << "Child failed: " << ex.what() << std::endl;
         m_child_failed = true;
         return;
@@ -76,9 +73,7 @@ public:
   }
 
 protected:
-  void
-  send_ipc_data(const void *buf, size_t size)
-  {
+  void send_ipc_data(const void *buf, size_t size) {
     if (write(m_write_fd, buf, size) != size) {
       if (!m_is_parent)
         throw std::runtime_error("Failed to send IPC data to parent");
@@ -87,29 +82,21 @@ protected:
     }
   }
 
-  bool
-  recv_ipc_data(void *buf, size_t size)
-  {
+  bool recv_ipc_data(void *buf, size_t size) {
     if (read(m_read_fd, buf, size) != size) {
       if (!m_is_parent) {
         throw std::runtime_error("Failed to read IPC data from parent");
       } else {
         std::cout << "Failed to read IPC data from child" << std::endl;
-	return false;
+        return false;
       }
     }
     return true;
   }
 
-  shim_xdna::device::id_type
-  get_dev_id()
-  {
-    return m_id;
-  }
+  shim_xdna::device::id_t get_dev_id() { return m_id; }
 
-  void
-  msg(const char* format,...)
-  {
+  void msg(const char *format, ...) {
     va_list args;
     std::string f = m_is_parent ? "P: " : "C: ";
     f += format;
@@ -120,15 +107,11 @@ protected:
   }
 
 private:
-  virtual void
-  run_test_parent() = 0;
+  virtual void run_test_parent() = 0;
 
-  virtual void
-  run_test_child() = 0;
+  virtual void run_test_child() = 0;
 
-  void
-  wait_for_child()
-  {
+  void wait_for_child() {
     int status = 0;
 
     wait(&status);
@@ -140,7 +123,7 @@ private:
   bool m_child_failed = true;
   int m_read_fd = -1;
   int m_write_fd = -1;
-  shim_xdna::device::id_type m_id;
+  shim_xdna::device::id_t m_id;
 };
 
 #endif // _SHIMTEST_2PROC_H_

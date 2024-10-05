@@ -108,7 +108,7 @@ void check_umq_vadd_result(int *ifm, int *wts, int *ofm)
 } // namespace
 
 void
-TEST_shim_umq_remote_barrier(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
+TEST_shim_umq_remote_barrier(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
 {
   auto dev = sdev.get();
 
@@ -134,7 +134,7 @@ TEST_shim_umq_remote_barrier(shim_xdna::device::id_type id, std::shared_ptr<shim
   }
 }
 void
-TEST_shim_umq_ddr_memtile(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
+TEST_shim_umq_ddr_memtile(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
 {
   auto dev = sdev.get();
 
@@ -165,7 +165,7 @@ TEST_shim_umq_ddr_memtile(shim_xdna::device::id_type id, std::shared_ptr<shim_xd
 }
 
 void
-TEST_shim_umq_memtiles(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
+TEST_shim_umq_memtiles(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
 {
   auto dev = sdev.get();
 
@@ -192,7 +192,7 @@ TEST_shim_umq_memtiles(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna:
 }
 
 void
-TEST_shim_umq_vadd(shim_xdna::device::id_type id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
+TEST_shim_umq_vadd(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
 {
   auto dev = sdev.get();
   const size_t IFM_BYTE_SIZE = 16 * 16 * sizeof (uint32_t);
