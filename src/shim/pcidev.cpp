@@ -2,9 +2,9 @@
 // Copyright (C) 2022-2024, Advanced Micro Devices, Inc. All rights reserved.
 
 #include "pcidev.h"
-#include "device.h"
 #include "amdxdna_accel.h"
-#include "pcidrv.h"
+#include "bo.h"
+#include "device.h"
 #include "shim.h"
 #include "shim_debug.h"
 #include <cassert>
@@ -15,17 +15,16 @@
 #include <fstream>
 #include <sstream>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 
 namespace sfs = std::filesystem;
 
-#define INVALID_ID      0xffff
+#define INVALID_ID 0xffff
 
 namespace {
 
-std::string
-ioctl_cmd2name(unsigned long cmd)
-{
-  switch(cmd) {
+std::string ioctl_cmd2name(unsigned long cmd) {
+  switch (cmd) {
   case DRM_IOCTL_AMDXDNA_CREATE_HWCTX:
     return "DRM_IOCTL_AMDXDNA_CREATE_HWCTX";
   case DRM_IOCTL_AMDXDNA_DESTROY_HWCTX:
@@ -71,438 +70,38 @@ ioctl_cmd2name(unsigned long cmd)
   return "UNKNOWN(" + std::to_string(cmd) + ")";
 }
 
+// Device memory heap needs to be within one 64MB page. The maximum size is
+// 64MB.
+const size_t dev_mem_size = (64 << 20);
 
-
-static std::string
-get_name(const std::string& dir, const std::string& subdir)
-{
-  std::string line;
-  std::ifstream ifs(dir + "/" + subdir + "/name");
-
-  if (ifs.is_open())
-    std::getline(ifs, line);
-
-  return line;
-}
-
-// Helper to find subdevice directory name
-// Assumption: all subdevice's sysfs directory name starts with subdevice name!!
-static int
-get_subdev_dir_name(const std::string& dir, const std::string& subDevName, std::string& subdir)
-{
-  DIR *dp;
-  size_t sub_nm_sz = subDevName.size();
-
-  subdir = "";
-  if (subDevName.empty())
-    return 0;
-
-  int ret = -ENOENT;
-  dp = opendir(dir.c_str());
-  if (dp) {
-    struct dirent *entry;
-    while ((entry = readdir(dp))) {
-      std::string nm = get_name(dir, entry->d_name);
-      if (!nm.empty()) {
-        if (nm != subDevName)
-          continue;
-      } else if(strncmp(entry->d_name, subDevName.c_str(), sub_nm_sz) ||
-                entry->d_name[sub_nm_sz] != '.') {
-        continue;
-      }
-      // found it
-      subdir = entry->d_name;
-      ret = 0;
-      break;
-    }
-    closedir(dp);
-  }
-
-  return ret;
-}
-
-static bool
-is_admin()
-{
-  return (getuid() == 0) || (geteuid() == 0);
-}
-
-static size_t
-bar_size(const std::string &dir, unsigned bar)
-{
-  std::ifstream ifs(dir + "/resource");
-  if (!ifs.good())
-    return 0;
-  std::string line;
-  for (unsigned i = 0; i <= bar; i++) {
-    line.clear();
-    std::getline(ifs, line);
-  }
-  long long start, end, meta;
-  if (sscanf(line.c_str(), "0x%llx 0x%llx 0x%llx", &start, &end, &meta) != 3)
-    return 0;
-  return end - start + 1;
-}
-
-static int
-get_render_value(const std::string& dir, const std::string& devnode_prefix)
-{
-  struct dirent *entry;
-  DIR *dp;
-  int instance_num = INVALID_ID;
-
-  dp = opendir(dir.c_str());
-  if (dp == NULL)
-    return instance_num;
-
-  while ((entry = readdir(dp))) {
-    std::string dirname{entry->d_name};
-    if(dirname.compare(0, devnode_prefix.size(), devnode_prefix) == 0) {
-      instance_num = std::stoi(dirname.substr(devnode_prefix.size()));
-      break;
-    }
-  }
-
-  closedir(dp);
-
-  return instance_num;
-}
-
-/*
- * wordcopy()
- *
- * Copy bytes word (32bit) by word.
- * Neither memcpy, nor std::copy work as they become byte copying
- * on some platforms.
- */
-inline void*
-wordcopy(void *dst, const void* src, size_t bytes)
-{
-  // assert dest is 4 byte aligned
-  assert((reinterpret_cast<intptr_t>(dst) % 4) == 0);
-
-  using word = uint32_t;
-  volatile auto d = reinterpret_cast<word*>(dst);
-  auto s = reinterpret_cast<const word*>(src);
-  auto w = bytes/sizeof(word);
-
-  for (size_t i=0; i<w; ++i)
-    d[i] = s[i];
-
-  return dst;
-}
-
-}
-
-namespace sysfs {
-
-static constexpr const char* dev_root = "/sys/bus/pci/devices/";
-
-static std::string
-get_path(const std::string& name, const std::string& subdev, const std::string& entry)
-{
-  std::string subdir;
-  if (get_subdev_dir_name(dev_root + name, subdev, subdir) != 0)
-    return "";
-
-  std::string path = dev_root;
-  path += name;
-  path += "/";
-  path += subdir;
-  path += "/";
-  path += entry;
-  return path;
-}
-
-static std::fstream
-open_path(const std::string& path, std::string& err, bool write, bool binary)
-{
-  std::fstream fs;
-  std::ios::openmode mode = write ? std::ios::out : std::ios::in;
-
-  if (binary)
-    mode |= std::ios::binary;
-
-  err.clear();
-  fs.open(path, mode);
-  if (!fs.is_open()) {
-    std::stringstream ss;
-    ss << "Failed to open " << path << " for "
-       << (binary ? "binary " : "")
-       << (write ? "writing" : "reading") << ": "
-       << strerror(errno) << std::endl;
-    err = ss.str();
-  }
-  return fs;
-}
-
-static std::fstream
-open(const std::string& name,
-     const std::string& subdev, const std::string& entry,
-     std::string& err, bool write, bool binary)
-{
-  std::fstream fs;
-  auto path = get_path(name, subdev, entry);
-
-  if (path.empty()) {
-    std::stringstream ss;
-    ss << "Failed to find subdirectory for " << subdev
-       << " under " << dev_root + name << std::endl;
-    err = ss.str();
-  } else {
-    fs = open_path(path, err, write, binary);
-  }
-
-  return fs;
-}
-
-static void
-get(const std::string& name,
-    const std::string& subdev, const std::string& entry,
-    std::string& err, std::vector<std::string>& sv)
-{
-  std::fstream fs = open(name, subdev, entry, err, false, false);
-  if (!err.empty())
-    return;
-
-  sv.clear();
-  std::string line;
-  while (std::getline(fs, line))
-    sv.push_back(line);
-}
-
-static void
-get(const std::string& name,
-    const std::string& subdev, const std::string& entry,
-    std::string& err, std::vector<uint64_t>& iv)
-{
-  iv.clear();
-
-  std::vector<std::string> sv;
-  get(name, subdev, entry, err, sv);
-  if (!err.empty())
-    return;
-
-  for (auto& s : sv) {
-    if (s.empty()) {
-      std::stringstream ss;
-      ss << "Reading " << get_path(name, subdev, entry) << ", ";
-      ss << "can't convert empty string to integer" << std::endl;
-      err = ss.str();
-      break;
-    }
-    char* end = nullptr;
-    auto n = std::strtoull(s.c_str(), &end, 0);
-    if (*end != '\0') {
-      std::stringstream ss;
-      ss << "Reading " << get_path(name, subdev, entry) << ", ";
-      ss << "failed to convert string to integer: " << s << std::endl;
-      err = ss.str();
-      break;
-    }
-    iv.push_back(n);
-  }
-}
-
-static void
-get(const std::string& name,
-    const std::string& subdev, const std::string& entry,
-    std::string& err, std::string& s)
-{
-  std::vector<std::string> sv;
-  get(name, subdev, entry, err, sv);
-  if (!sv.empty())
-    s = sv[0];
-  else
-    s = ""; // default value
-}
-
-static void
-get(const std::string& name,
-    const std::string& subdev, const std::string& entry,
-    std::string& err, std::vector<char>& buf)
-{
-  std::fstream fs = open(name, subdev, entry, err, false, true);
-  if (!err.empty())
-    return;
-
-  buf.clear();
-  buf.insert(std::end(buf),std::istreambuf_iterator<char>(fs),
-             std::istreambuf_iterator<char>());
-}
-
-static void
-put(const std::string& name,
-    const std::string& subdev, const std::string& entry,
-    std::string& err, const std::string& input)
-{
-  std::fstream fs = open(name, subdev, entry, err, true, false);
-  if (!err.empty())
-    return;
-  fs << input;
-  fs.close(); // flush and close, if either fails then stream failbit is set.
-  if (!fs.good()) {
-    std::stringstream ss;
-    ss << "Failed to write " << get_path(name, subdev, entry) << ": "
-       << strerror(errno) << std::endl;
-    err = ss.str();
-  }
-}
-
-static void
-put(const std::string& name,
-    const std::string& subdev, const std::string& entry,
-    std::string& err, const std::vector<char>& buf)
-{
-  std::fstream fs = open(name, subdev, entry, err, true, true);
-  if (!err.empty())
-    return;
-
-  fs.write(buf.data(), buf.size());
-  fs.close(); // flush and close, if either fails then stream failbit is set.
-  if (!fs.good()) {
-    std::stringstream ss;
-    ss << "Failed to write " << get_path(name, subdev, entry) << ": "
-       << strerror(errno) << std::endl;
-    err = ss.str();
-  }
-}
-
-static void
-put(const std::string& name,
-    const std::string& subdev, const std::string& entry,
-    std::string& err, const unsigned int& input)
-{
-  std::fstream fs = open(name, subdev, entry, err, true, false);
-  if (!err.empty())
-    return;
-  fs << input;
-  fs.close(); // flush and close, if either fails then stream failbit is set.
-  if (!fs.good()) {
-    std::stringstream ss;
-    ss << "Failed to write " << get_path(name, subdev, entry) << ": "
-       << strerror(errno) << std::endl;
-    err = ss.str();
-  }
-}
-
-} // sysfs
+} // namespace
 
 namespace shim_xdna {
 
-void
-pdev::
-sysfs_get(const std::string& subdev, const std::string& entry,
-          std::string& err, std::string& s)
-{
-  sysfs::get(m_sysfs_name, subdev, entry, err, s);
-}
-
-void
-pdev::
-sysfs_get(const std::string& subdev, const std::string& entry,
-          std::string& err, std::vector<uint64_t>& ret)
-{
-  sysfs::get(m_sysfs_name, subdev, entry, err, ret);
-}
-
-void
-pdev::
-sysfs_put(const std::string& subdev, const std::string& entry,
-          std::string& err, const std::string& input)
-{
-  sysfs::put(m_sysfs_name, subdev, entry, err, input);
-}
-
-pdev::
-pdev(std::shared_ptr<const drv> driver, std::string sysfs_name)
-    : m_sysfs_name(std::move(sysfs_name))
-    , m_driver(std::move(driver))
-{
+pdev::pdev() {
   std::string err;
-
-  if(sscanf(m_sysfs_name.c_str(), "%hx:%hx:%hx.%hx", &m_domain, &m_bus, &m_dev, &m_func) < 4)
-    throw std::invalid_argument(m_sysfs_name + " is not valid BDF");
-
-  m_is_mgmt = !m_driver->is_user();
-
-  if (m_is_mgmt) {
-    sysfs_get("", "instance", err, m_instance, static_cast<uint32_t>(INVALID_ID));
-  }
-  else {
-    m_instance = get_render_value(
-      sysfs::dev_root + m_sysfs_name + "/" + m_driver->sysfs_dev_node_dir(),
-      m_driver->dev_node_prefix());
-  }
-
-  sysfs_get<int>("", "userbar", err, m_user_bar, 0);
-  m_user_bar_size = bar_size(sysfs::dev_root + m_sysfs_name, m_user_bar);
-  sysfs_get<bool>("", "ready", err, m_is_ready, false);
-  m_user_bar_map = reinterpret_cast<char *>(MAP_FAILED);
   m_is_ready = true; // We're always ready.
 }
 
-pdev::
-~pdev()
-{
+pdev::~pdev() {
   if (m_dev_fd != -1)
     shim_debug("Device node fd leaked!! fd=%d", m_dev_fd);
 }
 
-device::handle_type
-pdev::
-create_shim(device::id_type id) const
-{
-  auto s = new shim_xdna::shim(id);
+device::handle_type pdev::create_shim(device::id_type id) const {
+  auto s = new shim(id);
   return static_cast<device::handle_type>(s);
 }
 
-std::string
-pdev::
-get_subdev_path(const std::string& subdev, uint idx) const
-{
-  // Main devfs path
-  if (subdev.empty()) {
-    std::string instStr = std::to_string(m_instance);
-    std::string prefixStr = "/dev/";
-    prefixStr += m_driver->dev_node_dir() + "/" + m_driver->dev_node_prefix();
-    return prefixStr + instStr;
-  }
-
-  // Subdev devfs path
-  std::string path("/dev/xfpga/");
-
-  path += subdev;
-  path += m_is_mgmt ? ".m" : ".u";
-  //if the domain number is big, the shift overflows, hence need to cast
-  uint32_t dom = static_cast<uint32_t>(m_domain);
-  path += std::to_string( (dom<<16)+ (m_bus<<8) + (m_dev<<3) + m_func);
-  path += "." + std::to_string(idx);
-  return path;
+int pdev::open(const std::string &subdev, uint32_t idx, int flag) const {
+  return ::open("/dev/accel/accel0", flag);
 }
 
-int
-pdev::
-open(const std::string& subdev, uint32_t idx, int flag) const
-{
-  if (m_is_mgmt && !::is_admin())
-    throw std::runtime_error("Root privileges required");
-
-  std::string devfs = get_subdev_path(subdev, idx);
-  return ::open(devfs.c_str(), flag);
-}
-
-int
-pdev::
-open(const std::string& subdev, int flag) const
-{
+int pdev::open(const std::string &subdev, int flag) const {
   return open(subdev, 0, flag);
 }
 
-void
-pdev::
-open() const
-{
+void pdev::open() const {
   int fd;
   const std::lock_guard<std::mutex> lock(m_lock);
 
@@ -520,10 +119,7 @@ open() const
   on_first_open();
 }
 
-void
-pdev::
-close() const
-{
+void pdev::close() const {
   int fd;
   const std::lock_guard<std::mutex> lock(m_lock);
 
@@ -540,10 +136,7 @@ close() const
   }
 }
 
-int
-pdev::
-ioctl(int dev_handle, unsigned long cmd, void *arg) const
-{
+int pdev::ioctl(int dev_handle, unsigned long cmd, void *arg) const {
   if (dev_handle == -1) {
     errno = -EINVAL;
     return -1;
@@ -551,31 +144,47 @@ ioctl(int dev_handle, unsigned long cmd, void *arg) const
   return ::ioctl(dev_handle, cmd, arg);
 }
 
-void
-pdev::
-ioctl(unsigned long cmd, void* arg) const
-{
+void pdev::ioctl(unsigned long cmd, void *arg) const {
   if (ioctl(m_dev_fd, cmd, arg) == -1)
     shim_err(errno, "%s IOCTL failed", ioctl_cmd2name(cmd).c_str());
 }
 
-void*
-pdev::
-mmap(void *addr, size_t len, int prot, int flags, off_t offset) const
-{
-  void* ret = ::mmap(addr, len, prot, flags, m_dev_fd, offset);
+void *pdev::mmap(void *addr, size_t len, int prot, int flags,
+                 off_t offset) const {
+  void *ret = ::mmap(addr, len, prot, flags, m_dev_fd, offset);
 
-  if (ret == reinterpret_cast<void*>(-1))
-    shim_err(errno, "mmap(addr=%p, len=%ld, prot=%d, flags=%d, offset=%ld) failed", addr, len, prot, flags, offset);
+  if (ret == reinterpret_cast<void *>(-1))
+    shim_err(errno,
+             "mmap(addr=%p, len=%ld, prot=%d, flags=%d, offset=%ld) failed",
+             addr, len, prot, flags, offset);
   return ret;
 }
 
-void
-pdev::
-munmap(void* addr, size_t len) const
-{
-  ::munmap(addr, len);
+void pdev::munmap(void *addr, size_t len) const { ::munmap(addr, len); }
+
+pdev_kmq::pdev_kmq() { shim_debug("Created KMQ pcidev"); }
+
+pdev_kmq::~pdev_kmq() { shim_debug("Destroying KMQ pcidev"); }
+
+std::shared_ptr<device> pdev_kmq::create_device(device::handle_type handle,
+                                                device::id_type id) const {
+  auto dev = std::make_shared<device_kmq>(*this, handle, id);
+  try {
+    // Alloc device memory on first device creation.
+    // No locking is needed since driver will ensure only one heap BO is
+    // created.
+    if (m_dev_heap_bo == nullptr)
+      m_dev_heap_bo =
+          std::make_unique<bo_kmq>(*dev, dev_mem_size, AMDXDNA_BO_DEV_HEAP);
+  } catch (const std::system_error &ex) {
+    if (ex.code().value() != EBUSY)
+      throw;
+  }
+  return dev;
 }
 
-} // namespace shim_xdna
+void pdev_kmq::on_last_close() const { m_dev_heap_bo.reset(); }
 
+std::shared_ptr<pdev> create_pcidev() { return std::make_shared<pdev_kmq>(); }
+
+} // namespace shim_xdna

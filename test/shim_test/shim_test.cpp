@@ -12,7 +12,6 @@
 #include "speed.h"
 #include "bo.h"
 
-#include "../../src/shim/pcidrv.h"
 #include "../../src/shim/shim.h"
 
 #include <filesystem>
@@ -743,8 +742,7 @@ main(int argc, char **argv)
   set_device_id(std::stoi(device_id, 0, 16));
   set_revision_id(std::stoi(revision_id, 0, 16));
 
-  std::shared_ptr<shim_xdna::drv> driver = std::make_shared<shim_xdna::drv>();
-  std::shared_ptr<shim_xdna::pdev> pf = driver->create_pcidev(device_path.filename());
+  std::shared_ptr<shim_xdna::pdev> pf = shim_xdna::create_pcidev();
   add_to_user_ready_list(pf);
 
   cur_path = dirname(argv[0]);

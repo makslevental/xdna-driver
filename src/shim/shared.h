@@ -8,26 +8,20 @@
 
 namespace shim_xdna {
 
-class shared_handle
-{
+class shared_handle {
 public:
-  shared_handle(int fd) : m_fd(fd)
-  {}
+  shared_handle(int fd) : m_fd(fd) {}
 
-  ~shared_handle()
-  {
+  ~shared_handle() {
     if (m_fd != -1)
       close(m_fd);
   }
   using export_handle = int;
-  export_handle
-  get_export_handle() const
-  { return m_fd; }
+  export_handle get_export_handle() const { return m_fd; }
 
-private:
   const int m_fd;
 };
 
-} // shim_xdna
+} // namespace shim_xdna
 
 #endif // _SHARED_XDNA_H_

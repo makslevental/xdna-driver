@@ -9,34 +9,26 @@
 
 namespace shim_xdna {
 
-std::shared_ptr<shim_xdna::device> my_get_userpf_device(shim_xdna::device::id_type id);
-void add_to_user_ready_list(const std::shared_ptr<shim_xdna::pdev> &dev);
+std::shared_ptr<device> my_get_userpf_device(device::id_type id);
+void add_to_user_ready_list(const std::shared_ptr<pdev> &dev);
 
-std::shared_ptr<shim_xdna::pdev> get_dev(unsigned index);
+std::shared_ptr<pdev> get_dev(unsigned index);
 
-std::shared_ptr<shim_xdna::device>
-my_get_userpf_device(shim_xdna::device::handle_type handle, shim_xdna::device::id_type id);
+std::shared_ptr<device> my_get_userpf_device(device::handle_type handle,
+                                             device::id_type id);
 
-std::shared_ptr<shim_xdna::device>
-my_get_userpf_device(shim_xdna::device::handle_type handle);
+std::shared_ptr<device> my_get_userpf_device(device::handle_type handle);
 
-class shim
-{
+class shim {
 public:
-  shim(device::id_type id) : m_device(my_get_userpf_device(this, id))
-  {
+  std::shared_ptr<device> m_device;
+
+  shim(device::id_type id) : m_device(my_get_userpf_device(this, id)) {
     shim_debug("creating shim for id %d", id);
   }
 
-  ~shim()
-  {
-    shim_debug("destroying shim");
-  }
-
-private:
-  std::shared_ptr<device> m_device;
+  ~shim() { shim_debug("destroying shim"); }
 };
-
 
 } // namespace shim_xdna
 

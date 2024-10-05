@@ -6,42 +6,35 @@
 
 #include <cstdio>
 #include <memory>
-#include <unistd.h>
 #include <system_error>
+#include <unistd.h>
 
-void
-debugf(const char* format,...);
+void debugf(const char *format, ...);
 
-# define XRT_PRINTF(format,...) debugf(format, ##__VA_ARGS__)
+#define XRT_PRINTF(format, ...) debugf(format, ##__VA_ARGS__)
 
 namespace shim_xdna {
 
-template <typename ...Args>
-[[ noreturn ]] void
-shim_err(int err, const char* fmt, Args&&... args)
-{
+template <typename... Args>
+[[noreturn]] void shim_err(int err, const char *fmt, Args &&...args) {
   std::string format = std::string(fmt);
   format += " (err=%d)";
-  int sz = std::snprintf(nullptr, 0, format.c_str(), args ..., err) + 1;
-  if(sz <= 0)
-    throw std::system_error(sz, std::system_category(), "could not format error string");
+  int sz = std::snprintf(nullptr, 0, format.c_str(), args..., err) + 1;
+  if (sz <= 0)
+    throw std::system_error(sz, std::system_category(),
+                            "could not format error string");
 
   auto size = static_cast<size_t>(sz);
   std::unique_ptr<char[]> buf(new char[size]);
-  std::snprintf(buf.get(), size, format.c_str(), args ..., err);
+  std::snprintf(buf.get(), size, format.c_str(), args..., err);
   throw std::system_error(err, std::system_category(), std::string(buf.get()));
 }
 
-[[ noreturn ]] inline void
-shim_not_supported_err(const char* msg)
-{
+[[noreturn]] inline void shim_not_supported_err(const char *msg) {
   shim_err(ENOTSUP, msg);
 }
 
-template <typename ...Args>
-void
-shim_debug(const char* fmt, Args&&... args)
-{
+template <typename... Args> void shim_debug(const char *fmt, Args &&...args) {
 #ifndef NDEBUG
   std::string format = "";
   format += std::string(fmt);
@@ -50,16 +43,13 @@ shim_debug(const char* fmt, Args&&... args)
 #endif
 }
 
-template <typename ...Args>
-void
-shim_info(const char* fmt, Args&&... args)
-{
+template <typename... Args> void shim_info(const char *fmt, Args &&...args) {
   std::string format = "PID(%d): ";
   format += std::string(fmt);
   format += "\n";
   XRT_PRINTF(format.c_str(), getpid(), std::forward<Args>(args)...);
 }
 
-}
+} // namespace shim_xdna
 
 #endif // SHIM_DEBUG_H

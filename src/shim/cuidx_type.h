@@ -8,8 +8,8 @@
 #include <cstdint>
 
 #ifdef _WIN32
-# pragma warning( push )
-# pragma warning( disable : 4201 )
+#pragma warning(push)
+#pragma warning(disable : 4201)
 #endif
 
 namespace xrt_core {
@@ -36,10 +36,10 @@ struct cuidx_type {
   using domain_index_type = uint16_t;
 };
 
-} // xrt_core
+} // namespace xrt_core
 
 #ifdef _WIN32
-# pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 #endif

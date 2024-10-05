@@ -9,7 +9,6 @@
 #include <memory>
 #include <mutex>
 #include <vector>
-#include <sys/mman.h>
 
 namespace shim_xdna {
 
@@ -19,97 +18,52 @@ namespace shim_xdna {
 class drv;
 class device;
 
-class pdev
-{
+class pdev {
 public:
-  uint16_t m_domain =           INVALID_ID;
-  uint16_t m_bus =              INVALID_ID;
-  uint16_t m_dev =              INVALID_ID;
-  uint16_t m_func =             INVALID_ID;
-  uint32_t m_instance =         INVALID_ID;
-  std::string m_sysfs_name;     // dir name under /sys/bus/pci/devices
-  int m_user_bar =              0;  // BAR mapped in by tools, default is BAR0
-  size_t m_user_bar_size =      0;
-  bool m_is_mgmt =              false;
-  bool m_is_ready =             false;
+  bool m_is_ready = false;
   mutable std::mutex m_lock;
   mutable int m_dev_fd = -1;
   mutable int m_dev_users = 0;
-  // Virtual address of memory mapped BAR0, mapped on first use, once mapped, never change.
-  mutable char *m_user_bar_map = reinterpret_cast<char *>(MAP_FAILED);
-  std::shared_ptr<const drv> m_driver;
-  
-  pdev(std::shared_ptr<const drv> driver, std::string sysfs_name);
-  virtual ~pdev();
-
   using id_type = unsigned int;
   using slot_id = uint32_t;
-  using handle_type = void*;
+  using handle_type = void *;
 
-  virtual handle_type
-  create_shim(id_type id) const;
+  pdev();
+  virtual ~pdev();
 
-  virtual std::shared_ptr<device>
-  create_device(handle_type handle, id_type id) const
-  { shim_not_supported_err(__func__); }
-
-  std::string
-  get_subdev_path(const std::string& subdev, uint32_t idx) const;
-
-  void
-  sysfs_get(const std::string& subdev, const std::string& entry,
-            std::string& err, std::string& s);
-
-  void
-  sysfs_get(const std::string& subdev, const std::string& entry,
-            std::string& err, std::vector<uint64_t>& iv);
-
-  template <typename T>
-  void
-  sysfs_get(const std::string& subdev, const std::string& entry,
-            std::string& err, T& i, const T& default_val)
-  {
-    std::vector<uint64_t> iv;
-    sysfs_get(subdev, entry, err, iv);
-    if (!iv.empty())
-      i = static_cast<T>(iv[0]);
-    else
-      i = static_cast<T>(default_val); // default value
+  virtual handle_type create_shim(id_type id) const;
+  virtual std::shared_ptr<device> create_device(handle_type handle,
+                                                id_type id) const {
+    shim_not_supported_err(__func__);
   }
 
-  void
-  sysfs_put(const std::string& subdev, const std::string& entry,
-            std::string& err, const std::string& input);
-
-  int
-  open(const std::string& subdev, int flag) const;
-
-  int
-  open(const std::string& subdev, uint32_t idx, int flag) const;
-
-  int
-  ioctl(int devhdl, unsigned long cmd, void* arg = nullptr) const;
-
-  void
-  ioctl(unsigned long cmd, void* arg) const;
-
-  void*
-  mmap(void *addr, size_t len, int prot, int flags, off_t offset) const;
-
-  void
-  munmap(void* addr, size_t len) const;
-
-  void
-  open() const;
-
-  void
-  close() const;
-
-  virtual void
-  on_first_open() const {}
-  virtual void
-  on_last_close() const {}
+  int open(const std::string &subdev, int flag) const;
+  int open(const std::string &subdev, uint32_t idx, int flag) const;
+  int ioctl(int devhdl, unsigned long cmd, void *arg = nullptr) const;
+  void ioctl(unsigned long cmd, void *arg) const;
+  void *mmap(void *addr, size_t len, int prot, int flags, off_t offset) const;
+  void munmap(void *addr, size_t len) const;
+  void open() const;
+  void close() const;
+  virtual void on_first_open() const {}
+  virtual void on_last_close() const {}
 };
+
+class pdev_kmq : public pdev {
+public:
+  pdev_kmq();
+  ~pdev_kmq() override;
+
+  std::shared_ptr<device> create_device(device::handle_type handle,
+                                        device::id_type id) const override;
+
+  // Create on first device creation and removed right before device is closed
+  mutable std::unique_ptr<bo> m_dev_heap_bo;
+
+  void on_last_close() const override;
+};
+
+std::shared_ptr<pdev> create_pcidev();
 
 } // namespace shim_xdna
 
