@@ -132,7 +132,7 @@ sync_before_run()
     case IO_TEST_BO_INSTRUCTION:
     case IO_TEST_BO_PARAMETERS:
     case IO_TEST_BO_MC_CODE:
-      ibo->tbo->get()->sync(shim_xdna::bo::direction::host2device, ibo->tbo->size(), 0);
+      ibo->tbo->get()->sync(shim_xdna::direction::host2device, ibo->tbo->size(), 0);
       break;
     default:
       break;
@@ -149,7 +149,7 @@ sync_after_run()
     switch(i) {
     case IO_TEST_BO_OUTPUT:
     case IO_TEST_BO_INTERMEDIATE:
-      ibo->tbo->get()->sync(shim_xdna::bo::direction::device2host, ibo->tbo->size(), 0);
+      ibo->tbo->get()->sync(shim_xdna::direction::device2host, ibo->tbo->size(), 0);
       break;
     default:
       break;
@@ -159,7 +159,7 @@ sync_after_run()
 
 void
 io_test_bo_set::
-init_cmd(xrt_core::cuidx_type idx, bool dump)
+init_cmd(shim_xdna::cuidx_type idx, bool dump)
 {
   exec_buf ebuf(*m_bo_array[IO_TEST_BO_CMD].tbo.get(), ERT_START_CU);
 
@@ -229,7 +229,7 @@ run(const std::vector<shim_xdna::fence_handle*>& wait_fences,
   auto chdl = cbo->get();
   for (const auto& fence : wait_fences)
     hwq->submit_wait(fence);
-  hwq->submit_command(chdl);
+  hwq->issue_command(chdl);
   for (const auto& fence : signal_fences)
     hwq->submit_signal(fence);
   hwq->wait_command(chdl, 5000);

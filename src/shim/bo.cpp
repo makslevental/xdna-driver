@@ -85,7 +85,7 @@ int export_drm_bo(const shim_xdna::pdev &dev, uint32_t boh) {
 uint32_t import_drm_bo(const shim_xdna::pdev &dev,
                        const shim_xdna::shared_handle &share,
                        amdxdna_bo_type *type, size_t *size) {
-  shim_xdna::shared_handle::export_handle fd = share.get_export_handle();
+  int fd = share.get_export_handle();
   drm_prime_handle imp_bo = {AMDXDNA_INVALID_BO_HANDLE, 0, fd};
   dev.ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &imp_bo);
 
@@ -143,12 +143,12 @@ inline void clflush_data(const void *base, size_t offset, size_t len) {
 }
 
 void sync_drm_bo(const shim_xdna::pdev &dev, uint32_t boh,
-                 shim_xdna::bo::direction dir, size_t offset, size_t len) {
+                 shim_xdna::direction dir, size_t offset, size_t len) {
   amdxdna_drm_sync_bo sbo = {
       .handle = boh,
-      .direction = (dir == shim_xdna::bo::direction::host2device
-                        ? SYNC_DIRECT_TO_DEVICE
-                        : SYNC_DIRECT_FROM_DEVICE),
+      .direction =
+          (dir == shim_xdna::direction::host2device ? SYNC_DIRECT_TO_DEVICE
+                                                    : SYNC_DIRECT_FROM_DEVICE),
       .offset = offset,
       .size = len,
   };
@@ -169,12 +169,12 @@ bool is_driver_sync() {
 
 namespace shim_xdna {
 
-bo::drm_bo::drm_bo(bo &parent, const amdxdna_drm_get_bo_info &bo_info)
+drm_bo::drm_bo(bo &parent, const amdxdna_drm_get_bo_info &bo_info)
     : m_parent(parent), m_handle(bo_info.handle),
       m_map_offset(bo_info.map_offset), m_vaddr(bo_info.vaddr),
       m_xdna_addr(bo_info.xdna_addr) {}
 
-bo::drm_bo::~drm_bo() {
+drm_bo::~drm_bo() {
   if (m_handle == AMDXDNA_INVALID_BO_HANDLE)
     return;
   try {
@@ -257,7 +257,7 @@ void bo::alloc_bo() {
 
   amdxdna_drm_get_bo_info bo_info = {};
   get_drm_bo_info(m_pdev, boh, &bo_info);
-  m_bo = std::make_unique<bo::drm_bo>(*this, bo_info);
+  m_bo = std::make_unique<drm_bo>(*this, bo_info);
 }
 
 void bo::import_bo() {
@@ -265,7 +265,7 @@ void bo::import_bo() {
 
   amdxdna_drm_get_bo_info bo_info = {};
   get_drm_bo_info(m_pdev, boh, &bo_info);
-  m_bo = std::make_unique<bo::drm_bo>(*this, bo_info);
+  m_bo = std::make_unique<drm_bo>(*this, bo_info);
 }
 
 void bo::free_bo() { m_bo.reset(); }
@@ -276,8 +276,8 @@ bo::bo(const device &device, uint32_t ctx_id, size_t size, uint64_t flags)
     shim_err(EINVAL, "Invalid BO flags: 0x%lx", flags);
 }
 
-bo::bo(const device &device, hw_ctx::slot_id ctx_id, size_t size,
-       uint64_t flags, amdxdna_bo_type type)
+bo::bo(const device &device, uint32_t ctx_id, size_t size, uint64_t flags,
+       amdxdna_bo_type type)
     : m_pdev(device.get_pdev()), m_aligned_size(size), m_flags(flags),
       m_type(type), m_import(-1), m_owner_ctx_id(ctx_id) {
   size_t align = 0;
@@ -327,7 +327,7 @@ bo::bo(const device &device, hw_ctx::slot_id ctx_id, size_t size,
              m_aligned, m_aligned_size, m_flags, m_type, get_drm_bo_handle());
 }
 
-bo::bo(const device &device, shared_handle::export_handle ehdl)
+bo::bo(const device &device, int ehdl)
     : m_pdev(device.get_pdev()), m_import(ehdl) {
   import_bo();
   mmap_bo();
@@ -352,11 +352,11 @@ bo::~bo() {
 bo::bo(const device &device, size_t size, amdxdna_bo_type type)
     : bo(device, AMDXDNA_INVALID_CTX_HANDLE, size, 0, type) {}
 
-bo::properties bo::get_properties() const {
+properties bo::get_properties() const {
   return {m_flags, m_aligned_size, get_paddr(), get_drm_bo_handle()};
 }
 
-void *bo::map(map_type type) {
+void *bo::map(map_type type) const {
   if (type != map_type::write)
     shim_err(
         EINVAL,

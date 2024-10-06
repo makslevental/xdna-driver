@@ -5,33 +5,44 @@
 #define _HWCTX_XDNA_H_
 
 #include "amdxdna_accel.h"
-#include "cuidx_type.h"
 #include "device.h"
-#include "shared.h"
 #include "shim_debug.h"
 
 #include <map>
 
 namespace shim_xdna {
 
-class hw_q;   // forward declaration
-class bo;     // forward declaration
-class device; // forward declaration
+class hw_q;
+class bo;
+class device;
+
+struct cu_info {
+  std::string m_name;
+  size_t m_func;
+  std::vector<uint8_t> m_pdi;
+};
+
+struct cuidx_type {
+  union {
+    std::uint32_t index;
+    struct {
+      std::uint16_t domain_index; // [15-0]
+      std::uint16_t domain;       // [31-16]
+    };
+  };
+
+  // Ensure consistent use of domain and index types
+  using domain_type = uint16_t;
+  using domain_index_type = uint16_t;
+};
 
 class hw_ctx {
 public:
-  using cfg_param_type = std::map<std::string, uint32_t>;
-  using qos_type = cfg_param_type; // alias to old type
+  using qos_t = std::map<std::string, uint32_t>;
   enum class access_mode : uint8_t { exclusive = 0, shared = 1 };
-  using slot_id = uint32_t;
-  const device &m_device;
-  slot_id m_handle = AMDXDNA_INVALID_CTX_HANDLE;
+  device &m_device;
+  uint32_t m_handle = AMDXDNA_INVALID_CTX_HANDLE;
   amdxdna_qos_info m_qos = {};
-  struct cu_info {
-    std::string m_name;
-    size_t m_func;
-    std::vector<uint8_t> m_pdi;
-  };
   std::vector<cu_info> m_cu_info;
   std::unique_ptr<hw_q> m_q;
   uint32_t m_ops_per_cycle;
@@ -41,34 +52,22 @@ public:
   void *m_log_buf;
   std::vector<std::unique_ptr<bo>> m_pdi_bos;
 
-  hw_ctx(const device &dev, const qos_type &qos, std::unique_ptr<hw_q> q,
+  hw_ctx(device &dev, const qos_t &qos, std::unique_ptr<hw_q> q,
          const xrt::xclbin &xclbin);
-  hw_ctx(const device &dev, const xrt::xclbin &xclbin, const qos_type &qos);
+  hw_ctx(device &dev, const xrt::xclbin &xclbin, const qos_t &qos);
   ~hw_ctx();
 
   // TODO
-  void update_qos(const qos_type &) { shim_not_supported_err(__func__); }
-  void update_access_mode(access_mode) { shim_not_supported_err(__func__); }
-  slot_id get_slotidx() const;
-  hw_q *get_hw_queue();
   std::unique_ptr<bo> alloc_bo(void *userptr, size_t size, uint64_t flags);
   std::unique_ptr<bo> alloc_bo(size_t size, uint64_t flags);
-  std::unique_ptr<bo> import_bo(pid_t, shared_handle::export_handle);
-  xrt_core::cuidx_type open_cu_context(const std::string &cuname);
-  void close_cu_context(xrt_core::cuidx_type cuidx);
-  void exec_buf(bo *) { shim_not_supported_err(__func__); }
-  uint32_t get_doorbell() const;
-  const device &get_device();
-  const std::vector<cu_info> &get_cu_info() const;
-  void set_slotidx(slot_id id);
-  void set_doorbell(uint32_t db);
+  std::unique_ptr<bo> import_bo(pid_t, int);
+  cuidx_type open_cu_context(const std::string &cuname);
   void create_ctx_on_device();
   void init_log_buf();
-  void fini_log_buf();
+  void fini_log_buf() const;
   void delete_ctx_on_device();
-  void init_qos_info(const qos_type &qos);
-  void parse_xclbin(const xrt::xclbin &xclbin);
-  void print_xclbin_info();
+
+  hw_q *get_hw_queue() const;
 };
 
 } // namespace shim_xdna

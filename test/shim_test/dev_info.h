@@ -4,16 +4,14 @@
 #ifndef _SHIMTEST_DEV_INFO_H_
 #define _SHIMTEST_DEV_INFO_H_
 
-#include "../../src/shim/cuidx_type.h"
 #include "../../src/shim/device.h"
-
-using namespace xrt_core;
+#include "../../src/shim/hwctx.h"
 
 struct xclbin_info {
   const char* name;
   const uint16_t device;
   const uint16_t revision_id;
-  const std::map<const char*, cuidx_type> ip_name2idx;
+  const std::map<const char*, shim_xdna::cuidx_type> ip_name2idx;
   const std::string workspace;
 };
 
@@ -37,6 +35,6 @@ const xclbin_info& get_xclbin_info(shim_xdna::device* dev, const char *xclbin_na
 std::string get_xclbin_name(shim_xdna::device* dev);
 std::string get_xclbin_workspace(shim_xdna::device* dev, const char *xclbin_name=nullptr);
 std::string get_xclbin_path(shim_xdna::device* dev, const char *xclbin_name=nullptr);
-const std::map<const char*, cuidx_type>& get_xclbin_ip_name2index(shim_xdna::device* dev, const char *xclbin_name=nullptr);
+const std::map<const char*, shim_xdna::cuidx_type>& get_xclbin_ip_name2index(shim_xdna::device* dev, const char *xclbin_name=nullptr);
 
 #endif // _SHIMTEST_DEV_INFO_H_

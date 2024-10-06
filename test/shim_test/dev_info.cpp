@@ -246,7 +246,7 @@ get_xclbin_path(shim_xdna::device* dev, const char *xclbin_name)
   return wrk + "/" + std::string(xclbin_name);
 }
 
-const std::map<const char*, cuidx_type>&
+const std::map<const char*, shim_xdna::cuidx_type>&
 get_xclbin_ip_name2index(shim_xdna::device* dev, const char *xclbin_name)
 {
   return get_xclbin_info(dev, xclbin_name).ip_name2idx;

@@ -7,7 +7,6 @@
 #include "amdxdna_accel.h"
 #include "device.h"
 #include "hwctx.h"
-#include "shared.h"
 
 #include <string>
 
@@ -59,44 +58,44 @@ struct xcl_bo_flags {
   };
 };
 
+// map_type - determines how a buffer is mapped
+enum class map_type { read, write };
+
+enum xclBOSyncDirection {
+  XCL_BO_SYNC_BO_TO_DEVICE = 0,
+  XCL_BO_SYNC_BO_FROM_DEVICE,
+  XCL_BO_SYNC_BO_GMIO_TO_AIE,
+  XCL_BO_SYNC_BO_AIE_TO_GMIO,
+};
+
+// direction - direction of sync operation
+enum class direction {
+  host2device = XCL_BO_SYNC_BO_TO_DEVICE,
+  device2host = XCL_BO_SYNC_BO_FROM_DEVICE,
+};
+
+// properties - buffer details
+struct properties {
+  uint64_t flags; // flags of bo
+  uint64_t size;  // size of bo
+  uint64_t paddr; // physical address
+  uint64_t kmhdl; // kernel mode handle
+};
+
+class drm_bo {
+public:
+  bo &m_parent;
+  uint32_t m_handle = AMDXDNA_INVALID_BO_HANDLE;
+  off_t m_map_offset = AMDXDNA_INVALID_ADDR;
+  uint64_t m_xdna_addr = AMDXDNA_INVALID_ADDR;
+  uint64_t m_vaddr = AMDXDNA_INVALID_ADDR;
+
+  drm_bo(bo &parent, const amdxdna_drm_get_bo_info &bo_info);
+  ~drm_bo();
+};
+
 class bo {
 public:
-  // map_type - determines how a buffer is mapped
-  enum class map_type { read, write };
-
-  enum xclBOSyncDirection {
-    XCL_BO_SYNC_BO_TO_DEVICE = 0,
-    XCL_BO_SYNC_BO_FROM_DEVICE,
-    XCL_BO_SYNC_BO_GMIO_TO_AIE,
-    XCL_BO_SYNC_BO_AIE_TO_GMIO,
-  };
-
-  // direction - direction of sync operation
-  enum class direction {
-    host2device = XCL_BO_SYNC_BO_TO_DEVICE,
-    device2host = XCL_BO_SYNC_BO_FROM_DEVICE,
-  };
-
-  // properties - buffer details
-  struct properties {
-    uint64_t flags; // flags of bo
-    uint64_t size;  // size of bo
-    uint64_t paddr; // physical address
-    uint64_t kmhdl; // kernel mode handle
-  };
-
-  class drm_bo {
-  public:
-    bo &m_parent;
-    uint32_t m_handle = AMDXDNA_INVALID_BO_HANDLE;
-    off_t m_map_offset = AMDXDNA_INVALID_ADDR;
-    uint64_t m_xdna_addr = AMDXDNA_INVALID_ADDR;
-    uint64_t m_vaddr = AMDXDNA_INVALID_ADDR;
-
-    drm_bo(bo &parent, const amdxdna_drm_get_bo_info &bo_info);
-    ~drm_bo();
-  };
-
   const pdev &m_pdev;
   void *m_parent = nullptr;
   void *m_aligned = nullptr;
@@ -116,17 +115,17 @@ public:
 
   // Used when exclusively assigned to a HW context. By default, BO is shared
   // among all HW contexts.
-  hw_ctx::slot_id m_owner_ctx_id = AMDXDNA_INVALID_CTX_HANDLE;
+  uint32_t m_owner_ctx_id = AMDXDNA_INVALID_CTX_HANDLE;
 
-  bo(const device &device, hw_ctx::slot_id ctx_id, size_t size, uint64_t flags,
+  bo(const device &device, uint32_t ctx_id, size_t size, uint64_t flags,
      amdxdna_bo_type type);
   bo(const device &device, uint32_t ctx_id, size_t size, uint64_t flags);
-  bo(const device &device, shared_handle::export_handle ehdl);
+  bo(const device &device, int ehdl);
   // Support BO creation from internal
   bo(const device &device, size_t size, amdxdna_bo_type type);
   ~bo();
 
-  void *map(map_type);
+  void *map(map_type) const;
   void unmap(void *addr);
   void sync(direction, size_t size, size_t offset);
   properties get_properties() const;

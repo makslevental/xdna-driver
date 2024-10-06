@@ -38,7 +38,7 @@ create_bo_from_bin(shim_xdna::device* dev, const std::string& filename)
   size_t sz = get_bin_size(filename);
   bo ret_bo{dev, sz};
   read_from_bin(filename, reinterpret_cast<char*>(ret_bo.map()), sz);
-  ret_bo.get()->sync(shim_xdna::bo::direction::host2device, sz, 0);
+  ret_bo.get()->sync(shim_xdna::direction::host2device, sz, 0);
   std::cout << "Created BO from " << filename << std::endl;
   return ret_bo;
 }
@@ -86,7 +86,7 @@ prepare_cmd_npu2(bo& execbuf, const std::string& elf, bo& ctrl, bo& ifm, bo& wts
 void
 check_result(bo& bo_ofm, bo& bo_ofm_golden)
 {
-  bo_ofm.get()->sync(shim_xdna::bo::direction::device2host, bo_ofm.size(), 0);
+  bo_ofm.get()->sync(shim_xdna::direction::device2host, bo_ofm.size(), 0);
 
   auto ofm_p = reinterpret_cast<uint8_t*>(bo_ofm.map());
   auto ofm_golden_p = reinterpret_cast<uint8_t*>(bo_ofm_golden.map());
@@ -131,7 +131,7 @@ TEST_txn_elf_flow(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device>
   auto cu_idx = hwctx.get()->open_cu_context("DPU:IPUV1CNN");
   exec_buf::set_cu_idx(bo_exec_buf, cu_idx);
 
-  hwq->submit_command(bo_exec_buf.get());
+  hwq->issue_command(bo_exec_buf.get());
   hwq->wait_command(bo_exec_buf.get(), 0);
 
   check_result(bo_ofm, bo_ofm_golden);

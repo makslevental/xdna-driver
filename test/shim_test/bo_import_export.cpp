@@ -8,8 +8,6 @@
 
 namespace {
 
-using namespace xrt_core;
-
 class test_2proc_export_import_bo : public test_2proc
 {
 public:
@@ -19,7 +17,7 @@ public:
 private:
   struct ipc_data {
     pid_t pid;
-    shim_xdna::shared_handle::export_handle hdl;
+    int hdl;
   };
 
   void

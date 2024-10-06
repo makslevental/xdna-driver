@@ -11,8 +11,6 @@
 
 void debugf(const char *format, ...);
 
-#define XRT_PRINTF(format, ...) debugf(format, ##__VA_ARGS__)
-
 namespace shim_xdna {
 
 template <typename... Args>
@@ -36,10 +34,10 @@ template <typename... Args>
 
 template <typename... Args> void shim_debug(const char *fmt, Args &&...args) {
 #ifndef NDEBUG
-  std::string format = "";
+  std::string format;
   format += std::string(fmt);
   format += "\n";
-  XRT_PRINTF(format.c_str(), std::forward<Args>(args)...);
+  debugf(format.c_str(), std::forward<Args>(args)...);
 #endif
 }
 
@@ -47,7 +45,7 @@ template <typename... Args> void shim_info(const char *fmt, Args &&...args) {
   std::string format = "PID(%d): ";
   format += std::string(fmt);
   format += "\n";
-  XRT_PRINTF(format.c_str(), getpid(), std::forward<Args>(args)...);
+  debugf(format.c_str(), getpid(), std::forward<Args>(args)...);
 }
 
 } // namespace shim_xdna

@@ -4,9 +4,8 @@
 #ifndef _FENCE_XDNA_H_
 #define _FENCE_XDNA_H_
 
-#include "shared.h"
-
 #include "shim_debug.h"
+
 #include <mutex>
 #include <vector>
 
@@ -14,6 +13,19 @@ namespace shim_xdna {
 class pdev;
 class device;
 class hw_ctx;
+
+class shared_handle {
+public:
+  shared_handle(int fd) : m_fd(fd) {}
+
+  ~shared_handle() {
+    if (m_fd != -1)
+      close(m_fd);
+  }
+  int get_export_handle() const { return m_fd; }
+
+  const int m_fd;
+};
 
 class fence_handle {
 public:
@@ -31,9 +43,10 @@ public:
   enum class access_mode : uint8_t { local, shared, process, hybrid };
 
   fence_handle(const device &device);
-  fence_handle(const device &device, shared_handle::export_handle ehdl);
+  fence_handle(const device &device, int ehdl);
   fence_handle(const fence_handle &);
   ~fence_handle();
+
   std::unique_ptr<fence_handle> clone() const;
   std::unique_ptr<shared_handle> share_handle() const;
   void wait(uint32_t timeout_ms) const;

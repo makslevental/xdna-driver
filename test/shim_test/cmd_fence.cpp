@@ -12,7 +12,6 @@
 
 namespace {
 
-using namespace xrt_core;
 using arg_type = const std::vector<uint64_t>;
 
 class test_2proc_cmd_fence_host : public test_2proc
@@ -24,8 +23,8 @@ public:
 private:
   struct ipc_data {
     pid_t pid;
-    shim_xdna::shared_handle::export_handle shdl; // for signaling
-    shim_xdna::shared_handle::export_handle whdl; // for waiting
+    int shdl; // for signaling
+    int whdl; // for waiting
   };
 
   void
@@ -87,7 +86,7 @@ public:
 private:
   struct ipc_data {
     pid_t pid;
-    shim_xdna::shared_handle::export_handle hdl;
+    int hdl;
   };
 
   void

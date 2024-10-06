@@ -11,7 +11,7 @@ namespace {
 
 ert_packet *get_chained_command_pkt(shim_xdna::bo *boh) {
   auto cmdpkt =
-      reinterpret_cast<ert_packet *>(boh->map(shim_xdna::bo::map_type::write));
+      reinterpret_cast<ert_packet *>(boh->map(shim_xdna::map_type::write));
   return cmdpkt->opcode == ERT_CMD_CHAIN ? cmdpkt : nullptr;
 }
 
@@ -23,7 +23,7 @@ int wait_cmd(const shim_xdna::pdev &pdev, const shim_xdna::hw_ctx *ctx,
   shim_xdna::shim_debug("Waiting for cmd (%ld)...", id);
 
   amdxdna_drm_wait_cmd wcmd = {
-      .hwctx = ctx->get_slotidx(),
+      .hwctx = ctx->m_handle,
       .timeout = timeout_ms,
       .seq = id,
   };
@@ -50,25 +50,12 @@ hw_q::hw_q(const device &device)
 
 void hw_q::bind_hwctx(const hw_ctx *ctx) {
   m_hwctx = ctx;
-  shim_debug("Bond HW queue to HW context %d", m_hwctx->get_slotidx());
+  shim_debug("Bond HW queue to HW context %d", m_hwctx->m_handle);
 }
 
 void hw_q::unbind_hwctx() {
-  shim_debug("Unbond HW queue from HW context %d", m_hwctx->get_slotidx());
+  shim_debug("Unbond HW queue from HW context %d", m_hwctx->m_handle);
   m_hwctx = nullptr;
-}
-
-uint32_t hw_q::get_queue_bo() { return m_queue_boh; }
-
-void hw_q::submit_command(bo *cmd) { issue_command(cmd); }
-
-int hw_q::poll_command(bo *cmd) const {
-  auto cmdpkt = reinterpret_cast<ert_packet *>(cmd->map(bo::map_type::write));
-
-  if (cmdpkt->state >= ERT_CMD_STATE_COMPLETED) {
-    return 1;
-  }
-  return 0;
 }
 
 int hw_q::wait_command(bo *cmd, uint32_t timeout_ms) const {
@@ -95,10 +82,10 @@ void hw_q::issue_command(bo *cmd_bo) {
   uint32_t cmd_bo_hdl = cmd_bo->get_drm_bo_handle();
 
   amdxdna_drm_exec_cmd ecmd = {
-      .hwctx = m_hwctx->get_slotidx(),
+      .hwctx = m_hwctx->m_handle,
       .type = AMDXDNA_CMD_SUBMIT_EXEC_BUF,
       .cmd_handles = cmd_bo_hdl,
-      .args = reinterpret_cast<uintptr_t>(arg_bo_hdls),
+      .args = reinterpret_cast<uint64_t>(arg_bo_hdls),
       .cmd_count = 1,
       .arg_count = cmd_bo->get_arg_bo_handles(arg_bo_hdls, max_arg_bos),
   };
@@ -107,6 +94,15 @@ void hw_q::issue_command(bo *cmd_bo) {
   auto id = ecmd.seq;
   cmd_bo->set_cmd_id(id);
   shim_debug("Submitted command (%ld)", id);
+}
+
+int poll_command(bo *cmd) {
+  auto cmdpkt = reinterpret_cast<ert_packet *>(cmd->map(map_type::write));
+
+  if (cmdpkt->state >= ERT_CMD_STATE_COMPLETED) {
+    return 1;
+  }
+  return 0;
 }
 
 } // namespace shim_xdna

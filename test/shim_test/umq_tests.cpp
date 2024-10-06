@@ -56,7 +56,7 @@ void
 umq_cmd_submit(shim_xdna::hw_q *hwq, bo& exec_buf_bo)
 {
   // Send command through HSA queue and wait for it to complete
-  hwq->submit_command(exec_buf_bo.get());
+  hwq->issue_command(exec_buf_bo.get());
 }
 
 void

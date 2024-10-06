@@ -32,14 +32,14 @@ public:
   }
 
   static void
-  set_cu_idx(bo& bo_execbuf, xrt_core::cuidx_type cu_idx)
+  set_cu_idx(bo& bo_execbuf, shim_xdna::cuidx_type cu_idx)
   {
     auto cmd_pkt = reinterpret_cast<ert_start_kernel_cmd *>(bo_execbuf.map());
     cmd_pkt->cu_mask = 0x1 << cu_idx.index;
   }
 
   void
-  set_cu_idx(xrt_core::cuidx_type cu_idx)
+  set_cu_idx(shim_xdna::cuidx_type cu_idx)
   {
     m_cmd_pkt->cu_mask = 0x1 << cu_idx.index;
   }
@@ -141,7 +141,7 @@ public:
     auto mod = xrt::module{elf};
     size_t instr_size = bo_ctrl.size();
     xrt_core::module_int::patch(mod, reinterpret_cast<uint8_t*>(bo_ctrl.map()), &instr_size, &m_patching_args);
-    bo_ctrl.get()->sync(shim_xdna::bo::direction::host2device, instr_size, 0);
+    bo_ctrl.get()->sync(shim_xdna::direction::host2device, instr_size, 0);
   }
 
 private:

@@ -126,7 +126,7 @@ xrt::xclbin device::get_xclbin(const xrt::uuid &xclbin_id) const {
 }
 
 std::unique_ptr<hw_ctx> device::create_hw_context(const xrt::uuid &xclbin_uuid,
-                                                  const qos_type &qos) const {
+                                                  const qos_t &qos) {
   return std::make_unique<hw_ctx>(*this, get_xclbin(xclbin_uuid), qos);
 }
 
@@ -139,8 +139,7 @@ std::unique_ptr<bo> device::alloc_bo(void *userptr, size_t size,
   return alloc_bo(userptr, AMDXDNA_INVALID_CTX_HANDLE, size, flags);
 }
 
-std::unique_ptr<bo> device::import_bo(pid_t pid,
-                                      shared_handle::export_handle ehdl) {
+std::unique_ptr<bo> device::import_bo(pid_t pid, int ehdl) {
   return import_bo(import_fd(pid, ehdl));
 }
 
@@ -148,8 +147,7 @@ std::unique_ptr<fence_handle> device::create_fence(fence_handle::access_mode) {
   return std::make_unique<fence_handle>(*this);
 }
 
-std::unique_ptr<fence_handle>
-device::import_fence(pid_t pid, shared_handle::export_handle ehdl) {
+std::unique_ptr<fence_handle> device::import_fence(pid_t pid, int ehdl) {
   return std::make_unique<fence_handle>(*this, import_fd(pid, ehdl));
 }
 
@@ -159,7 +157,7 @@ void device::record_xclbin(const xrt::xclbin &xclbin) {
   m_xclbin = xclbin;
 }
 
-std::unique_ptr<bo> device::alloc_bo(void *userptr, hw_ctx::slot_id ctx_id,
+std::unique_ptr<bo> device::alloc_bo(void *userptr, uint32_t ctx_id,
                                      size_t size, uint64_t flags) {
   if (userptr)
     shim_not_supported_err("User ptr BO");
@@ -167,7 +165,7 @@ std::unique_ptr<bo> device::alloc_bo(void *userptr, hw_ctx::slot_id ctx_id,
   return std::make_unique<bo>(*this, ctx_id, size, flags);
 }
 
-std::unique_ptr<bo> device::import_bo(shared_handle::export_handle ehdl) const {
+std::unique_ptr<bo> device::import_bo(int ehdl) const {
   return std::make_unique<bo>(*this, ehdl);
 }
 
@@ -316,9 +314,9 @@ std::shared_ptr<device> my_get_userpf_device(device::id_t id) {
   return pdev->create_device();
 }
 
-std::unique_ptr<hw_ctx> create_hw_context(const device &dev,
+std::unique_ptr<hw_ctx> create_hw_context(device &dev,
                                           const xrt::xclbin &xclbin,
-                                          const hw_ctx::qos_type &qos) {
+                                          const hw_ctx::qos_t &qos) {
   return std::make_unique<hw_ctx>(dev, xclbin, qos);
 }
 

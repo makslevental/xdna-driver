@@ -8,9 +8,6 @@
 #include "../../src/shim/hwctx.h"
 #include <iostream>
 
-
-using namespace xrt_core;
-
 class hw_ctx {
 public:
   hw_ctx(shim_xdna::device* dev, const char *xclbin_name=nullptr)
@@ -42,7 +39,7 @@ private:
     }
     dev->record_xclbin(xclbin);
     auto xclbin_uuid = xclbin.get_uuid();
-    shim_xdna::device::qos_type qos{ {"gops", 100} };
+    shim_xdna::device::qos_t qos{ {"gops", 100} };
     m_handle = dev->create_hw_context(xclbin_uuid, qos);
     std::cout << "loaded " << xclbin_path << std::endl;
   }

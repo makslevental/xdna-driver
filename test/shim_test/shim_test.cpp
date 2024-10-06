@@ -254,9 +254,9 @@ TEST_create_free_debug_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna:
     hw_ctx hwctx{dev};
     auto bo = hwctx.get()->alloc_bo(size, get_bo_flags(boflags, ext_boflags));
 
-    auto dbg_p = static_cast<uint32_t *>(bo->map(shim_xdna::bo::map_type::write));
+    auto dbg_p = static_cast<uint32_t *>(bo->map(shim_xdna::map_type::write));
     std::memset(dbg_p, 0xff, size);
-    bo.get()->sync(shim_xdna::bo::direction::device2host, size, 0);
+    bo.get()->sync(shim_xdna::direction::device2host, size, 0);
     if (std::memcmp(dbg_p, std::string(size, 0xff).c_str(), size) != 0)
       throw std::runtime_error("Debug buffer is not zero");
   }
@@ -268,7 +268,7 @@ TEST_create_free_debug_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna:
     bo = hwctx.get()->alloc_bo(size, get_bo_flags(boflags, ext_boflags));
   }
   try {
-    bo.get()->sync(shim_xdna::bo::direction::device2host, size, 0);
+    bo.get()->sync(shim_xdna::direction::device2host, size, 0);
   } catch (const std::system_error& e) {
     std::cout << e.what() << std::endl;
   }
@@ -277,7 +277,7 @@ TEST_create_free_debug_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna:
 void
 get_and_show_bo_properties(shim_xdna::device* dev, shim_xdna::bo *boh)
 {
-  shim_xdna::bo::properties properties = boh->get_properties();
+  shim_xdna::properties properties = boh->get_properties();
   std::cout << std::hex
     << "\tbo flags: 0x" << properties.flags << "\n"
     << "\tbo paddr: 0x" << properties.paddr << "\n"
@@ -309,8 +309,8 @@ TEST_sync_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev
   bo bo{sdev.get(), size, boflags, ext_boflags};
 
   auto start = clk::now();
-  bo.get()->sync(shim_xdna::bo::direction::host2device, size / 2, 0);
-  bo.get()->sync(shim_xdna::bo::direction::device2host, size / 2, size / 2);
+  bo.get()->sync(shim_xdna::direction::host2device, size / 2, 0);
+  bo.get()->sync(shim_xdna::direction::device2host, size / 2, size / 2);
   auto end = clk::now();
 
   get_speed_and_print("sync", size, start, end);
@@ -327,7 +327,7 @@ TEST_sync_bo_off_size(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::dev
   bo bo{sdev.get(), size, boflags, ext_boflags};
 
   auto start = clk::now();
-  bo.get()->sync(shim_xdna::bo::direction::host2device, sync_size, sync_offset);
+  bo.get()->sync(shim_xdna::direction::host2device, sync_size, sync_offset);
   auto end = clk::now();
 
   get_speed_and_print("sync", sync_size, start, end);
@@ -340,7 +340,7 @@ TEST_map_read_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> 
   auto size = static_cast<size_t>(arg[0]);
   auto bo_hdl = dev->alloc_bo(size, get_bo_flags(XRT_BO_FLAGS_NONE, 0));
 
-  auto buf = bo_hdl->map(shim_xdna::bo::map_type::read);
+  auto buf = bo_hdl->map(shim_xdna::map_type::read);
 }
 
 void speed_test_fill_buf(std::vector<int> &vec)
@@ -425,7 +425,6 @@ TEST_open_close_cu_context(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna
 
   for (auto& ip : get_xclbin_ip_name2index(dev)) {
     auto idx = hwctx.get()->open_cu_context(ip.first);
-    hwctx.get()->close_cu_context(idx);
     auto r = idx.index;
     auto e = ip.second.index;
     if (r != e) {

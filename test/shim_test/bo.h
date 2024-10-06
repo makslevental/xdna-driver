@@ -9,8 +9,6 @@
 
 namespace {
 
-using namespace xrt_core;
-
 uint64_t
 get_bo_flags(uint32_t flags, uint32_t ext_flags)
 {
@@ -42,7 +40,7 @@ public:
   {
   }
 
-  bo(shim_xdna::device* dev, pid_t pid, shim_xdna::shared_handle::export_handle ehdl)
+  bo(shim_xdna::device* dev, pid_t pid, int ehdl)
     : m_dev(dev)
   {
     m_handle = m_dev->import_bo(pid, ehdl);
@@ -91,7 +89,7 @@ public:
   int *
   map_and_chk()
   {
-    m_bop = reinterpret_cast<int *>(m_handle->map(shim_xdna::bo::map_type::write));
+    m_bop = reinterpret_cast<int *>(m_handle->map(shim_xdna::map_type::write));
     if (!m_bop)
       throw std::runtime_error("map bo of " + std::to_string(size()) + "bytes failed");
     return m_bop;

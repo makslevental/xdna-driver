@@ -47,7 +47,7 @@ public:
   sync_after_run();
 
   void
-  init_cmd(xrt_core::cuidx_type idx, bool dump);
+  init_cmd(shim_xdna::cuidx_type idx, bool dump);
 
   void
   dump_content();

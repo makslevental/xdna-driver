@@ -95,7 +95,7 @@ void submit_wait_syncobjs(const shim_xdna::pdev &dev,
   wait_syncobj_available(dev, sobj_hdls, points, num);
 
   amdxdna_drm_exec_cmd ecmd = {
-      .hwctx = ctx->get_slotidx(),
+      .hwctx = ctx->m_handle,
       .type = AMDXDNA_CMD_SUBMIT_DEPENDENCY,
       .cmd_handles = reinterpret_cast<uintptr_t>(sobj_hdls),
       .args = reinterpret_cast<uintptr_t>(points),
@@ -109,7 +109,7 @@ void submit_signal_syncobj(const shim_xdna::pdev &dev,
                            const shim_xdna::hw_ctx *ctx, uint32_t sobj_hdl,
                            uint64_t point) {
   amdxdna_drm_exec_cmd ecmd = {
-      .hwctx = ctx->get_slotidx(),
+      .hwctx = ctx->m_handle,
       .type = AMDXDNA_CMD_SUBMIT_SIGNAL,
       .cmd_handles = sobj_hdl,
       .args = point,
@@ -129,8 +129,7 @@ fence_handle::fence_handle(const device &device)
   shim_debug("Fence allocated: %d@%d", m_syncobj_hdl, m_state);
 }
 
-fence_handle::fence_handle(const device &device,
-                           shared_handle::export_handle ehdl)
+fence_handle::fence_handle(const device &device, int ehdl)
     : m_pdev(device.get_pdev()),
       m_import(std::make_unique<shared_handle>(ehdl)),
       m_syncobj_hdl(import_syncobj(m_pdev, m_import->get_export_handle())) {

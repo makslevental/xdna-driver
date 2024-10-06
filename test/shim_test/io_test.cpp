@@ -13,7 +13,6 @@
 #include <string>
 #include <cstring>
 
-using namespace xrt_core;
 using arg_type = const std::vector<uint64_t>;
 
 namespace {
@@ -88,7 +87,7 @@ io_test_init_runlist_cmd(bo* cmd_bo, std::vector<bo*>& cmd_bos)
 void io_test_cmd_wait(shim_xdna::hw_q *hwq, std::shared_ptr<bo> bo)
 {
     if (io_test_parameters.wait == IO_TEST_POLL_WAIT) {
-        while(!hwq->poll_command(bo->get()));
+        while(!poll_command(bo->get()));
     } else {
         hwq->wait_command(bo->get(), 0);
     }
@@ -106,7 +105,7 @@ io_test_cmd_submit_and_wait_latency(
 
   while (completed < total_cmd_submission) {
     for (auto& cmd : cmdlist_bos) {
-        hwq->submit_command(std::get<0>(cmd).get()->get());
+        hwq->issue_command(std::get<0>(cmd).get()->get());
         io_test_cmd_wait(hwq, std::get<0>(cmd));
         if (std::get<1>(cmd)->state != ERT_CMD_STATE_COMPLETED)
           throw std::runtime_error("Command error");
@@ -130,7 +129,7 @@ io_test_cmd_submit_and_wait_thruput(
   int wait_idx = 0;
 
   for (auto& cmd : cmdlist_bos) {
-      hwq->submit_command(std::get<0>(cmd).get()->get());
+      hwq->issue_command(std::get<0>(cmd).get()->get());
       issued++;
       if (issued >= total_cmd_submission)
         break;
@@ -144,7 +143,7 @@ io_test_cmd_submit_and_wait_thruput(
     completed++;
 
     if (issued < total_cmd_submission) {
-      hwq->submit_command(std::get<0>(cmdlist_bos[wait_idx]).get()->get());
+      hwq->issue_command(std::get<0>(cmdlist_bos[wait_idx]).get()->get());
       issued++;
     }
 

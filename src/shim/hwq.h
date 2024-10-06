@@ -6,7 +6,6 @@
 
 #include "fence.h"
 #include "hwctx.h"
-#include "shim_debug.h"
 
 namespace shim_xdna {
 class bo;
@@ -19,22 +18,16 @@ public:
   hw_q(const device &device);
   ~hw_q();
 
-  void submit_command(bo *);
-  int poll_command(bo *) const;
   int wait_command(bo *, uint32_t timeout_ms) const;
   void submit_wait(const fence_handle *);
   void submit_wait(const std::vector<fence_handle *> &);
   void submit_signal(const fence_handle *);
-
-  std::unique_ptr<fence_handle> import(fence_handle::export_handle) {
-    shim_not_supported_err(__func__);
-  }
-
   void bind_hwctx(const hw_ctx *ctx);
   void unbind_hwctx();
-  uint32_t get_queue_bo();
   void issue_command(bo *);
 };
+
+int poll_command(bo *);
 
 } // namespace shim_xdna
 
