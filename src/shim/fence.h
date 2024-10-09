@@ -10,12 +10,11 @@
 #include <vector>
 
 namespace shim_xdna {
-class pdev;
-class device;
-class hw_ctx;
+struct pdev;
+struct device;
+struct hw_ctx;
 
-class shared_handle {
-public:
+struct shared_handle {
   shared_handle(int fd) : m_fd(fd) {}
 
   ~shared_handle() {
@@ -27,8 +26,7 @@ public:
   const int m_fd;
 };
 
-class fence_handle {
-public:
+struct fence_handle {
   using export_handle = int;
   const pdev &m_pdev;
   const std::unique_ptr<shared_handle> m_import;

@@ -23,20 +23,20 @@ std::string cur_path;
 std::string xclbin_path;
 
 using arg_type = const std::vector<uint64_t>;
-void TEST_export_import_bo(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_io(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_io_latency(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_io_throughput(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_io_runlist_latency(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_io_runlist_throughput(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_noop_io_with_dup_bo(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_shim_umq_vadd(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_shim_umq_memtiles(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_shim_umq_ddr_memtile(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_shim_umq_remote_barrier(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_txn_elf_flow(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_cmd_fence_host(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
-void TEST_cmd_fence_device(shim_xdna::device::id_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_export_import_bo(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_io(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_io_latency(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_io_throughput(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_io_runlist_latency(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_io_runlist_throughput(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_noop_io_with_dup_bo(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_shim_umq_vadd(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_shim_umq_memtiles(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_shim_umq_ddr_memtile(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_shim_umq_remote_barrier(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_txn_elf_flow(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_cmd_fence_host(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
+void TEST_cmd_fence_device(uint32_t, std::shared_ptr<shim_xdna::device>, arg_type&);
 
 #define REPEAT_RUNS 100
 
@@ -72,8 +72,8 @@ usage(const std::string& prog)
 struct test_case { // Definition of one test case
   const char *description;
   enum test_mode mode;
-  bool (*dev_filter)(shim_xdna::device::id_t id, shim_xdna::device *dev);
-  void (*func)(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> dev, arg_type& arg);
+  bool (*dev_filter)(uint32_t id, shim_xdna::device *dev);
+  void (*func)(uint32_t id, std::shared_ptr<shim_xdna::device> dev, arg_type& arg);
   arg_type arg;
 };
 
@@ -90,31 +90,31 @@ is_xdna_dev(shim_xdna::device* dev)
 }
 
 bool
-no_dev_filter(shim_xdna::device::id_t id, shim_xdna::device* dev)
+no_dev_filter(uint32_t id, shim_xdna::device* dev)
 {
   return true;
 }
 
 bool
-skip_dev_filter(shim_xdna::device::id_t id, shim_xdna::device* dev)
+skip_dev_filter(uint32_t id, shim_xdna::device* dev)
 {
   return false;
 }
 
 bool
-dev_filter_xdna(shim_xdna::device::id_t id, shim_xdna::device* dev)
+dev_filter_xdna(uint32_t id, shim_xdna::device* dev)
 {
   return is_xdna_dev(dev);
 }
 
 bool
-dev_filter_not_xdna(shim_xdna::device::id_t id, shim_xdna::device* dev)
+dev_filter_not_xdna(uint32_t id, shim_xdna::device* dev)
 {
   return !is_xdna_dev(dev);
 }
 
 bool
-dev_filter_is_aie2(shim_xdna::device::id_t id, shim_xdna::device* dev)
+dev_filter_is_aie2(uint32_t id, shim_xdna::device* dev)
 {
   if (!is_xdna_dev(dev))
     return false;
@@ -123,7 +123,7 @@ dev_filter_is_aie2(shim_xdna::device::id_t id, shim_xdna::device* dev)
 }
 
 bool
-dev_filter_is_aie4(shim_xdna::device::id_t id, shim_xdna::device* dev)
+dev_filter_is_aie4(uint32_t id, shim_xdna::device* dev)
 {
   if (!is_xdna_dev(dev))
     return false;
@@ -132,7 +132,7 @@ dev_filter_is_aie4(shim_xdna::device::id_t id, shim_xdna::device* dev)
 }
 
 bool
-dev_filter_is_aie(shim_xdna::device::id_t id, shim_xdna::device* dev)
+dev_filter_is_aie(uint32_t id, shim_xdna::device* dev)
 {
   return dev_filter_is_aie2(id, dev) || dev_filter_is_aie4(id, dev);
 }
@@ -140,7 +140,7 @@ dev_filter_is_aie(shim_xdna::device::id_t id, shim_xdna::device* dev)
 // All test case runners
 
 void
-TEST_get_xrt_info(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_get_xrt_info(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   throw std::runtime_error("TODO(max): re-enable TEST_get_xrt_info");
 //  boost::property_tree::ptree pt;
@@ -160,7 +160,7 @@ TEST_get_xrt_info(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device>
 }
 
 void
-TEST_get_os_info(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_get_os_info(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   throw std::runtime_error("TODO(max): re-enable TEST_get_os_info");
 //  boost::property_tree::ptree pt;
@@ -170,7 +170,7 @@ TEST_get_os_info(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> 
 }
 
 void
-TEST_get_total_devices(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_get_total_devices(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   throw std::runtime_error("TODO(max): re-enable TEST_get_total_devices");
 //  auto is_user = arg[0];
@@ -191,12 +191,12 @@ bdf_info2str(std::tuple<uint16_t, uint16_t, uint16_t, uint16_t>& info)
 }
 
 void
-TEST_get_bdf_info_and_get_device_id(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_get_bdf_info_and_get_device_id(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   throw std::runtime_error("TODO(max): re-enable TEST_get_bdf_info_and_get_device_id");
 //  auto is_user = arg[0];
 //  auto devinfo = get_total_devices(is_user);
-//  for (shim_xdna::device::id_type i = 0; i < devinfo.first; i++) {
+//  for (uint32_type i = 0; i < devinfo.first; i++) {
 //    auto info = get_bdf_info(i);
 //    auto bdf = bdf_info2str(info);
 //    std::cout << "device[" << i << "]: " << bdf << std::endl;
@@ -206,17 +206,17 @@ TEST_get_bdf_info_and_get_device_id(shim_xdna::device::id_t id, std::shared_ptr<
 }
 
 void
-TEST_get_mgmtpf_device(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_get_mgmtpf_device(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   throw std::runtime_error("TODO(max): re-enable TEST_get_mgmtpf_device");
 //  auto devinfo = get_total_devices(false);
-//  for (shim_xdna::device::id_type i = 0; i < devinfo.first; i++)
+//  for (uint32_type i = 0; i < devinfo.first; i++)
 //    auto dev = get_mgmtpf_device(i);
 }
 
 template <typename QueryRequestType>
 void
-TEST_query_userpf(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_query_userpf(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   throw std::runtime_error("TODO(max): re-enable TEST_query_userpf");
 //  auto query_result = device_query<QueryRequestType>(sdev);
@@ -225,7 +225,7 @@ TEST_query_userpf(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device>
 }
 
 void
-TEST_create_destroy_hw_context(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_create_destroy_hw_context(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   // Close existing device
   sdev.reset();
@@ -242,7 +242,7 @@ TEST_create_destroy_hw_context(shim_xdna::device::id_t id, std::shared_ptr<shim_
 }
 
 void
-TEST_create_free_debug_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_create_free_debug_bo(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   auto dev = sdev.get();
   auto boflags = XRT_BO_FLAGS_CACHEABLE;
@@ -285,7 +285,7 @@ get_and_show_bo_properties(shim_xdna::device* dev, shim_xdna::bo *boh)
 }
 
 void
-TEST_create_free_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_create_free_bo(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   auto dev = sdev.get();
   uint32_t boflags = static_cast<unsigned int>(arg[0]);
@@ -301,7 +301,7 @@ TEST_create_free_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::devic
 }
 
 void
-TEST_sync_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_sync_bo(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   auto boflags = static_cast<unsigned int>(arg[0]);
   auto ext_boflags = static_cast<unsigned int>(arg[1]);
@@ -317,7 +317,7 @@ TEST_sync_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev
 }
 
 void
-TEST_sync_bo_off_size(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_sync_bo_off_size(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   auto boflags = static_cast<unsigned int>(arg[0]);
   auto ext_boflags = static_cast<unsigned int>(arg[1]);
@@ -334,7 +334,7 @@ TEST_sync_bo_off_size(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::dev
 }
 
 void
-TEST_map_read_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_map_read_bo(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   auto dev = sdev.get();
   auto size = static_cast<size_t>(arg[0]);
@@ -380,7 +380,7 @@ void speed_test_base_line(size_t size)
 }
 
 void
-TEST_map_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_map_bo(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   auto boflags = static_cast<unsigned int>(arg[0]);
   auto ext_boflags = static_cast<unsigned int>(arg[1]);
@@ -418,7 +418,7 @@ TEST_map_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev,
 }
 
 void
-TEST_open_close_cu_context(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_open_close_cu_context(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   auto dev = sdev.get();
   hw_ctx hwctx{dev};
@@ -440,7 +440,7 @@ TEST_open_close_cu_context(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna
 }
 
 void
-TEST_create_destroy_hw_queue(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_create_destroy_hw_queue(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   hw_ctx hwctx{sdev.get()};
   // Test to create > 1 queues
@@ -618,7 +618,7 @@ std::vector<test_case> test_list {
 } // namespace
 
 void
-run_test(int id, const test_case& test, bool force, const shim_xdna::device::id_t& num_of_devices)
+run_test(int id, const test_case& test, bool force, const uint32_t& num_of_devices)
 {
   bool failed = (test.mode == TEST_NEGATIVE);
   bool skipped = true;
@@ -629,7 +629,7 @@ run_test(int id, const test_case& test, bool force, const shim_xdna::device::id_
       skipped = false;
       test.func(0, nullptr, test.arg);
     } else { // per user device test
-      for (shim_xdna::device::id_t i = 0; i < num_of_devices; i++) {
+      for (uint32_t i = 0; i < num_of_devices; i++) {
         auto dev = shim_xdna::my_get_userpf_device(i);
         if (!force && !test.dev_filter(i, dev.get()))
           continue;
@@ -663,7 +663,7 @@ void
 run_all_test(std::set<int>& tests)
 {
   auto all = tests.empty();
-  shim_xdna::device::id_t total_dev = 1;
+  uint32_t total_dev = 1;
 
   for (int i = 0; i < test_list.size(); i++) {
     if (!all) {

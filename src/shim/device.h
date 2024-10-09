@@ -11,13 +11,11 @@
 #include <map>
 
 namespace shim_xdna {
-class pdev;
-class bo;
+struct pdev;
+struct bo;
 using slot_id = uint32_t;
 
-class device {
-public:
-  using id_t = unsigned int;
+struct device {
   using qos_t = std::map<std::string, uint32_t>; // alias to old type
   enum class access_mode : uint8_t { exclusive = 0, shared = 1 };
 
@@ -54,8 +52,7 @@ public:
   void record_xclbin(const xrt::xclbin &xclbin);
 };
 
-class pdev {
-public:
+struct pdev {
   mutable std::mutex m_lock;
   mutable int m_dev_fd = -1;
   mutable int m_dev_users = 0;
@@ -77,7 +74,7 @@ public:
 
 std::shared_ptr<pdev> create_pcidev();
 
-std::shared_ptr<device> my_get_userpf_device(device::id_t id);
+std::shared_ptr<device> my_get_userpf_device(uint32_t id);
 void add_to_user_ready_list(const std::shared_ptr<pdev> &dev);
 
 std::unique_ptr<hw_ctx> create_hw_context(device &dev,

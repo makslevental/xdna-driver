@@ -164,7 +164,7 @@ std::string find_first_match_ip_name(shim_xdna::device* dev, const std::string& 
 }
 
 void
-io_test(shim_xdna::device::id_t id, shim_xdna::device* dev, int total_hwq_submit, int num_cmdlist, int cmds_per_list)
+io_test(uint32_t id, shim_xdna::device* dev, int total_hwq_submit, int num_cmdlist, int cmds_per_list)
 {
   // Allocate set of BOs for command submission based on num_cmdlist and cmds_per_list
   // Intentionally this is done before context creation to make sure BO and context
@@ -245,7 +245,7 @@ io_test(shim_xdna::device::id_t id, shim_xdna::device* dev, int total_hwq_submit
 }
 
 void
-TEST_io(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_io(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   unsigned int run_type = static_cast<unsigned int>(arg[0]);
 
@@ -254,7 +254,7 @@ TEST_io(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg
 }
 
 void
-TEST_io_latency(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_io_latency(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   unsigned int run_type = static_cast<unsigned int>(arg[0]);
   unsigned int wait_type = static_cast<unsigned int>(arg[1]);
@@ -265,7 +265,7 @@ TEST_io_latency(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> s
 }
 
 void
-TEST_io_throughput(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_io_throughput(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   unsigned int run_type = static_cast<unsigned int>(arg[0]);
   unsigned int wait_type = static_cast<unsigned int>(arg[1]);
@@ -276,7 +276,7 @@ TEST_io_throughput(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device
 }
 
 void
-TEST_io_runlist_latency(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_io_runlist_latency(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   unsigned int run_type = static_cast<unsigned int>(arg[0]);
   unsigned int wait_type = static_cast<unsigned int>(arg[1]);
@@ -293,7 +293,7 @@ TEST_io_runlist_latency(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::d
 }
 
 void
-TEST_io_runlist_throughput(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_io_runlist_throughput(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   throw std::runtime_error("TODO(max): re-enable TEST_io_runlist_throughput");
   unsigned int run_type = static_cast<unsigned int>(arg[0]);
@@ -314,7 +314,7 @@ TEST_io_runlist_throughput(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna
 }
 
 void
-TEST_noop_io_with_dup_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_noop_io_with_dup_bo(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   auto wrk = get_xclbin_workspace(sdev.get());
   io_test_bo_set boset{sdev.get(), wrk + "/data/"};

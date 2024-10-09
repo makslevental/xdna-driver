@@ -102,7 +102,7 @@ check_result(bo& bo_ofm, bo& bo_ofm_golden)
 } // namespace
 
 void
-TEST_txn_elf_flow(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
+TEST_txn_elf_flow(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
 {
   const char* xclbin_nm = "design.xclbin";
 

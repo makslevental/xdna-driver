@@ -82,8 +82,7 @@ struct properties {
   uint64_t kmhdl; // kernel mode handle
 };
 
-class drm_bo {
-public:
+struct drm_bo {
   bo &m_parent;
   uint32_t m_handle = AMDXDNA_INVALID_BO_HANDLE;
   off_t m_map_offset = AMDXDNA_INVALID_ADDR;
@@ -94,8 +93,7 @@ public:
   ~drm_bo();
 };
 
-class bo {
-public:
+struct bo {
   const pdev &m_pdev;
   void *m_parent = nullptr;
   void *m_aligned = nullptr;
@@ -103,7 +101,7 @@ public:
   size_t m_aligned_size = 0;
   uint64_t m_flags = 0;
   amdxdna_bo_type m_type = AMDXDNA_BO_INVALID;
-  std::unique_ptr<drm_bo> m_bo;
+  std::unique_ptr<drm_bo> m_drm_bo;
   const shared_handle m_import;
   // Only for AMDXDNA_BO_CMD type
   std::map<size_t, uint32_t> m_args_map;

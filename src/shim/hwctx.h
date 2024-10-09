@@ -12,9 +12,9 @@
 
 namespace shim_xdna {
 
-class hw_q;
-class bo;
-class device;
+struct hw_q;
+struct bo;
+struct device;
 
 struct cu_info {
   std::string m_name;
@@ -36,8 +36,7 @@ struct cuidx_type {
   using domain_index_type = uint16_t;
 };
 
-class hw_ctx {
-public:
+struct hw_ctx {
   using qos_t = std::map<std::string, uint32_t>;
   enum class access_mode : uint8_t { exclusive = 0, shared = 1 };
   device &m_device;

@@ -8,9 +8,8 @@
 #include "hwctx.h"
 
 namespace shim_xdna {
-class bo;
-class hw_q {
-public:
+struct bo;
+struct hw_q {
   const hw_ctx *m_hwctx;
   const pdev &m_pdev;
   uint32_t m_queue_boh;

@@ -17,7 +17,7 @@ using arg_type = const std::vector<uint64_t>;
 class test_2proc_cmd_fence_host : public test_2proc
 {
 public:
-  test_2proc_cmd_fence_host(shim_xdna::device::id_t id) : test_2proc(id)
+  test_2proc_cmd_fence_host(uint32_t id) : test_2proc(id)
   {}
 
 private:
@@ -80,7 +80,7 @@ private:
 class test_2proc_cmd_fence_device : public test_2proc
 {
 public:
-  test_2proc_cmd_fence_device(shim_xdna::device::id_t id) : test_2proc(id)
+  test_2proc_cmd_fence_device(uint32_t id) : test_2proc(id)
   {}
 
 private:
@@ -144,7 +144,7 @@ private:
 }
 
 void
-TEST_cmd_fence_host(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_cmd_fence_host(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   // Can't fork with opened device.
   sdev.reset();
@@ -154,7 +154,7 @@ TEST_cmd_fence_host(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::devic
 }
 
 void
-TEST_cmd_fence_device(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
+TEST_cmd_fence_device(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, arg_type& arg)
 {
   // Can't fork with opened device.
   sdev.reset();

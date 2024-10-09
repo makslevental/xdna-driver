@@ -207,7 +207,7 @@ std::string bo::describe() const {
   desc += type_to_name();
   desc += ", ";
   desc += "drm_bo=";
-  desc += std::to_string(m_bo->m_handle);
+  desc += std::to_string(m_drm_bo->m_handle);
   desc += ", ";
   desc += "size=";
   desc += std::to_string(m_aligned_size);
@@ -217,14 +217,14 @@ std::string bo::describe() const {
 void bo::mmap_bo(size_t align) {
   size_t a = align;
 
-  if (m_bo->m_map_offset == AMDXDNA_INVALID_ADDR) {
-    m_aligned = reinterpret_cast<void *>(m_bo->m_vaddr);
+  if (m_drm_bo->m_map_offset == AMDXDNA_INVALID_ADDR) {
+    m_aligned = reinterpret_cast<void *>(m_drm_bo->m_vaddr);
     return;
   }
 
   if (a == 0) {
     m_aligned = map_drm_bo(m_pdev, m_aligned_size, PROT_READ | PROT_WRITE,
-                           m_bo->m_map_offset);
+                           m_drm_bo->m_map_offset);
     return;
   }
 
@@ -239,12 +239,12 @@ void bo::mmap_bo(size_t align) {
   auto aligned = addr_align(m_parent, align);
   m_aligned =
       map_drm_bo(m_pdev, aligned, m_aligned_size, PROT_READ | PROT_WRITE,
-                 MAP_SHARED | MAP_FIXED, m_bo->m_map_offset);
+                 MAP_SHARED | MAP_FIXED, m_drm_bo->m_map_offset);
 }
 
 void bo::munmap_bo() {
   shim_debug("Unmap BO, aligned %p parent %p", m_aligned, m_parent);
-  if (m_bo->m_map_offset == AMDXDNA_INVALID_ADDR)
+  if (m_drm_bo->m_map_offset == AMDXDNA_INVALID_ADDR)
     return;
 
   unmap_drm_bo(m_pdev, m_aligned, m_aligned_size);
@@ -257,7 +257,7 @@ void bo::alloc_bo() {
 
   amdxdna_drm_get_bo_info bo_info = {};
   get_drm_bo_info(m_pdev, boh, &bo_info);
-  m_bo = std::make_unique<drm_bo>(*this, bo_info);
+  m_drm_bo = std::make_unique<drm_bo>(*this, bo_info);
 }
 
 void bo::import_bo() {
@@ -265,10 +265,10 @@ void bo::import_bo() {
 
   amdxdna_drm_get_bo_info bo_info = {};
   get_drm_bo_info(m_pdev, boh, &bo_info);
-  m_bo = std::make_unique<drm_bo>(*this, bo_info);
+  m_drm_bo = std::make_unique<drm_bo>(*this, bo_info);
 }
 
-void bo::free_bo() { m_bo.reset(); }
+void bo::free_bo() { m_drm_bo.reset(); }
 
 bo::bo(const device &device, uint32_t ctx_id, size_t size, uint64_t flags)
     : bo(device, ctx_id, size, flags, flag_to_type(flags)) {
@@ -367,8 +367,8 @@ void *bo::map(map_type type) const {
 void bo::unmap(void *addr) {}
 
 uint64_t bo::get_paddr() const {
-  if (m_bo->m_xdna_addr != AMDXDNA_INVALID_ADDR)
-    return m_bo->m_xdna_addr;
+  if (m_drm_bo->m_xdna_addr != AMDXDNA_INVALID_ADDR)
+    return m_drm_bo->m_xdna_addr;
   return reinterpret_cast<uintptr_t>(m_aligned);
 }
 
@@ -376,7 +376,7 @@ void bo::set_cmd_id(uint64_t id) { m_cmd_id = id; }
 
 uint64_t bo::get_cmd_id() const { return m_cmd_id; }
 
-uint32_t bo::get_drm_bo_handle() const { return m_bo->m_handle; }
+uint32_t bo::get_drm_bo_handle() const { return m_drm_bo->m_handle; }
 
 void bo::attach_to_ctx() {
   if (m_owner_ctx_id == AMDXDNA_INVALID_CTX_HANDLE)

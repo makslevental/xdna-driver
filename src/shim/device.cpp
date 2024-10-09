@@ -309,7 +309,7 @@ std::shared_ptr<pdev> get_dev(unsigned index) {
   return user_ready_list.at(index);
 }
 
-std::shared_ptr<device> my_get_userpf_device(device::id_t id) {
+std::shared_ptr<device> my_get_userpf_device(uint32_t id) {
   const auto &pdev = get_dev(id);
   return pdev->create_device();
 }

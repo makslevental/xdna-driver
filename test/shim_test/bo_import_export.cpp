@@ -11,7 +11,7 @@ namespace {
 class test_2proc_export_import_bo : public test_2proc
 {
 public:
-  test_2proc_export_import_bo(shim_xdna::device::id_t id) : test_2proc(id)
+  test_2proc_export_import_bo(uint32_t id) : test_2proc(id)
   {}
 
 private:
@@ -61,7 +61,7 @@ private:
 }
 
 void
-TEST_export_import_bo(shim_xdna::device::id_t id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
+TEST_export_import_bo(uint32_t id, std::shared_ptr<shim_xdna::device> sdev, const std::vector<uint64_t>& arg)
 {
   // Can't fork with opened device.
   sdev.reset();

@@ -11,7 +11,7 @@
 
 class test_2proc {
 public:
-  test_2proc(shim_xdna::device::id_t id) : m_id(id) {
+  test_2proc(uint32_t id) : m_id(id) {
     int p_pipefd[2] = {-1, -1};
     int c_pipefd[2] = {-1, -1};
 
@@ -94,7 +94,7 @@ protected:
     return true;
   }
 
-  shim_xdna::device::id_t get_dev_id() { return m_id; }
+  uint32_t get_dev_id() { return m_id; }
 
   void msg(const char *format, ...) {
     va_list args;
@@ -123,7 +123,7 @@ private:
   bool m_child_failed = true;
   int m_read_fd = -1;
   int m_write_fd = -1;
-  shim_xdna::device::id_t m_id;
+  uint32_t m_id;
 };
 
 #endif // _SHIMTEST_2PROC_H_
